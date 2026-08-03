@@ -165,6 +165,35 @@ stehen fest im Workflow und brauchen keine Secrets.
 > Zeilenumbruch am Ende eines Secrets führt zu einem Login-Fehler, der wie ein
 > falsches Passwort aussieht. Im Zweifel das Secret löschen und neu anlegen.
 
+### Der häufigste Fehler: falscher Reiter
+
+Unter *Settings → Secrets and variables → Actions* gibt es **zwei Reiter**:
+
+| Reiter | Zugriff im Workflow | Wofür |
+| --- | --- | --- |
+| **Secrets** | `${{ secrets.NAME }}` | Passwörter, Zugangsdaten – Werte sind nicht mehr lesbar |
+| **Variables** | `${{ vars.NAME }}` | unkritische Einstellungen – Werte bleiben im Klartext sichtbar |
+
+Werden die Zugangsdaten versehentlich im Reiter **Variables** angelegt, bleibt
+`secrets.FTP_SERVER` leer. Die FTP-Action meldet dann nur:
+
+```
+Error: Input required and not supplied: server
+```
+
+Das klingt nach einem Fehler im Workflow, ist aber ein Hinweis darauf, dass die
+Secrets nicht ankommen. Weitere mögliche Ursachen:
+
+- Die Werte wurden als **Environment secrets** statt als **Repository secrets**
+  angelegt. Environment-Secrets sind nur erreichbar, wenn der Job zusätzlich
+  ein `environment:` deklariert.
+- Im Namen steht ein Leerzeichen (`FTP_SERVER ` statt `FTP_SERVER`).
+- Die Secrets liegen in einem anderen Repository.
+
+Der Workflow prüft das inzwischen im Schritt **„Zugangsdaten prüfen"** und nennt
+beim Fehlschlag genau, welches der drei Secrets leer ankommt. Werte werden dabei
+nie ausgegeben.
+
 ### Warum das Zielverzeichnis `/` ist
 
 Bei ALL-INKL wird ein FTP-Benutzer beim Anlegen auf ein Verzeichnis

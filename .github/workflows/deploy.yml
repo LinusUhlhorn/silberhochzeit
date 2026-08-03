@@ -76,6 +76,43 @@ jobs:
           find dist -maxdepth 3 -type f | sort
           echo "Gesamtgröße: $(du -sh dist | cut -f1)"
 
+      # Ohne diese Prüfung meldet die FTP-Action nur
+      # "Input required and not supplied: server" – daraus ist nicht
+      # erkennbar, dass in Wahrheit die Secrets leer ankommen.
+      # Es werden ausschließlich "gesetzt"/"FEHLT" ausgegeben, niemals Werte.
+      - name: Zugangsdaten prüfen
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          fehlt=0
+          for name in FTP_SERVER FTP_USERNAME FTP_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret $name ist nicht gesetzt oder leer."
+              fehlt=1
+            else
+              echo "$name: gesetzt"
+            fi
+          done
+
+          if [ "$fehlt" -ne 0 ]; then
+            echo ""
+            echo "Die Secrets kommen im Workflow nicht an. Zu prüfen:"
+            echo ""
+            echo "1. Liegen sie unter Settings -> Secrets and variables -> Actions"
+            echo "   im Reiter 'Secrets' – und NICHT im Reiter 'Variables'?"
+            echo "2. Sind es 'Repository secrets' und keine 'Environment secrets'?"
+            echo "   Environment-Secrets erfordern zusätzlich ein 'environment:' im Job."
+            echo "3. Stimmen die Namen exakt, ohne Leerzeichen davor oder dahinter?"
+            echo "   Erwartet: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD"
+            echo "4. Wurden sie im richtigen Repository angelegt?"
+            exit 1
+          fi
+
+          echo "Alle drei Zugangsdaten sind vorhanden."
+
       - name: Website per FTPS veröffentlichen
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
