@@ -139,64 +139,50 @@ werden**, siehe Schritt 7.
 **Weg:** Repository → **Settings** → linke Spalte **Secrets and variables** →
 **Actions** → Reiter **Secrets** → **New repository secret**.
 
-Jetzt je nach Protokoll die passenden Secrets anlegen.
-
-### Variante A – SFTP mit Passwort (empfohlen)
+Es werden genau **drei** Secrets gebraucht – mehr nicht:
 
 | Name | Wert (Beispiel) |
 | --- | --- |
-| `FTP_PROTOCOL` | `sftp` |
-| `SFTP_HOST` | `ssh.meinedomain.de` |
-| `SFTP_USERNAME` | `benutzer123` |
-| `SFTP_PASSWORD` | das Passwort |
-| `SFTP_PORT` | `22` |
-| `SFTP_REMOTE_DIR` | `/httpdocs/` |
+| `FTP_SERVER` | `w021c706.kasserver.com` |
+| `FTP_USERNAME` | der FTP-Benutzer |
+| `FTP_PASSWORD` | das FTP-Passwort |
 
-### Variante B – SFTP mit SSH-Schlüssel (am sichersten)
+Protokoll (**explizites FTPS**), Port (**21**) und Zielverzeichnis (**`/`**)
+stehen fest im Workflow und brauchen keine Secrets.
 
-Wie Variante A, aber **statt** `SFTP_PASSWORD`:
+### Worauf es bei den Werten ankommt
 
-| Name | Wert |
-| --- | --- |
-| `SFTP_PRIVATE_KEY` | der **komplette private** Schlüssel |
+- **`FTP_SERVER`** enthält nur den Hostnamen. Kein `ftp://` davor, kein
+  Schrägstrich oder Pfad dahinter, keine Leer- oder Zeilenumbruchzeichen.
+  Bei ALL-INKL ist das der Servername der Form `wNNNcNNN.kasserver.com`,
+  **nicht** die eigene Domain.
+- **`FTP_USERNAME`** ist der FTP-Benutzer aus dem KAS (Form `fNNNNNNN`),
+  nicht die E-Mail-Adresse des KAS-Logins.
+- **`FTP_PASSWORD`** ist das Passwort des FTP-Benutzers, nicht das
+  KAS-Login-Passwort.
 
-Schlüsselpaar erzeugen:
+> **Achtung beim Einfügen:** Ein versehentliches Leerzeichen oder ein
+> Zeilenumbruch am Ende eines Secrets führt zu einem Login-Fehler, der wie ein
+> falsches Passwort aussieht. Im Zweifel das Secret löschen und neu anlegen.
 
-```bash
-ssh-keygen -t ed25519 -C "deploy-silberhochzeit" -f ~/.ssh/silberhochzeit_deploy
-```
+### Warum das Zielverzeichnis `/` ist
 
-- Der **öffentliche** Teil (`silberhochzeit_deploy.pub`) wird beim Hoster
-  hinterlegt bzw. an `~/.ssh/authorized_keys` auf dem Server angehängt.
-- Der **private** Teil (`silberhochzeit_deploy`, ohne `.pub`) kommt komplett
-  in das Secret – **einschließlich** der Zeilen
-  `-----BEGIN OPENSSH PRIVATE KEY-----` und `-----END OPENSSH PRIVATE KEY-----`.
+Bei ALL-INKL wird ein FTP-Benutzer beim Anlegen auf ein Verzeichnis
+eingeschränkt. Ist er bereits auf das Webverzeichnis der Seite begrenzt, dann
+**ist** die Wurzel der FTP-Verbindung schon dieses Verzeichnis. Ein zusätzlicher
+Pfad wie `/httpdocs/` würde dann ins Leere zeigen und zu
+`550 … No such file or directory` führen.
 
-Ist `SFTP_PRIVATE_KEY` gesetzt, benutzt der Workflow automatisch den
-Schlüssel und ignoriert das Passwort.
+Ist der FTP-Benutzer dagegen auf die Kontowurzel gesetzt und die Seite liegt
+in einem Unterordner, muss `server-dir` im Workflow entsprechend angepasst
+werden, z. B. auf `/silberhochzeit/`.
 
-### Variante C – FTPS oder FTP
+### Falls FTPS Verbindungsprobleme macht
 
-| Name | Wert (Beispiel) |
-| --- | --- |
-| `FTP_PROTOCOL` | `ftps` (oder `ftp`) |
-| `FTP_SERVER` | `ftp.meinedomain.de` |
-| `FTP_USERNAME` | `ftp1234567-web` |
-| `FTP_PASSWORD` | das Passwort |
-| `FTP_PORT` | `21` |
-| `FTP_REMOTE_DIR` | `/httpdocs/` |
-
-> Wird `FTP_PROTOCOL` nicht gesetzt, verwendet der Workflow **`ftps`**.
-
-### Zwischen FTP, FTPS und SFTP wechseln
-
-Nur das Secret `FTP_PROTOCOL` auf `sftp`, `ftps` oder `ftp` ändern und die
-passenden Zugangsdaten hinterlegen. Am Code muss nichts angepasst werden.
-
-Bei Verbindungsproblemen mit FTPS meldet der Hoster manchmal ein veraltetes
-TLS-Verfahren. Dann in `.github/workflows/deploy.yml` beim Schritt
-*„Übertragen per FTPS / FTP“* `protocol` einmalig fest auf `ftps-legacy`
-setzen.
+Manche Server sprechen kein modernes TLS. Dann in
+`.github/workflows/deploy.yml` beim Schritt *„Website per FTPS veröffentlichen“*
+`protocol: ftps` einmalig auf `ftps-legacy` ändern. Bei ALL-INKL ist das
+normalerweise nicht nötig.
 
 ---
 
@@ -273,15 +259,15 @@ ist bereits aufgeklappt.
 
 | Meldung | Ursache | Lösung |
 | --- | --- | --- |
-| `Kein Server hinterlegt` | Secret fehlt | `SFTP_HOST` bzw. `FTP_SERVER` anlegen |
-| `530 Login authentication failed` | Benutzername oder Passwort falsch | Zugangsdaten prüfen, Passwort neu setzen |
-| `ENOTFOUND` / `getaddrinfo` | Servername falsch | ohne `ftp://` eintragen, nur den Hostnamen |
-| `ECONNREFUSED` | falscher Port oder Protokoll | 22 für SFTP, 21 für FTP/FTPS |
-| `Permission denied (publickey)` | öffentlicher Schlüssel nicht auf dem Server | `.pub`-Datei beim Hoster hinterlegen |
-| `550 … No such file or directory` | Zielordner existiert nicht | Ordner prüfen, Schritt 4 |
-| `Host key verification failed` | Server unbekannt | Port in `SFTP_PORT` prüfen |
+| **Gar kein Lauf erscheint** | Der Workflow liegt nicht auf `main` | Actions liest die Workflow-Datei aus dem Branch, auf den gepusht wird. `.github/workflows/deploy.yml` muss auf `main` liegen. |
+| `530 Login authentication failed` | Benutzername oder Passwort falsch – oft ein mitkopiertes Leerzeichen | Secrets löschen und sauber neu anlegen |
+| `ENOTFOUND` / `getaddrinfo` | Servername falsch | nur den Hostnamen eintragen, ohne `ftp://` und ohne Pfad |
+| `ECONNREFUSED` / Zeitüberschreitung | falscher Port | für FTPS muss der Port `21` sein, nicht 22 oder 990 |
+| `550 … No such file or directory` | `server-dir` zeigt ins Leere | Ist der FTP-Benutzer aufs Webverzeichnis beschränkt, muss `server-dir: /` sein |
+| TLS-/Zertifikatsfehler | Server spricht kein modernes TLS | `protocol: ftps` einmalig auf `ftps-legacy` ändern |
 | `npm ci` schlägt fehl | `package-lock.json` fehlt oder passt nicht | `npm install` lokal ausführen, Lockfile committen |
 | Build bricht bei `tsc -b` ab | Tippfehler in `content.ts` | Fehlermeldung nennt Datei und Zeile |
+| Seite bleibt weiß, 404 bei `/assets/…` | falsche Basis-URL | Schritt 7 – bei Betrieb direkt unter der Domain muss `VITE_BASE_PATH` **ungesetzt** bleiben |
 
 Die Timeout-Zeit bei FTP kann bei sehr langsamen Servern zu knapp sein. Dann
 im Workflow beim FTP-Schritt `timeout: 60000` ergänzen.

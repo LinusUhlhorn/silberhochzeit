@@ -261,26 +261,25 @@ in den Quellcode.
 
 Anzulegen unter: Repository → Settings → Secrets and variables → Actions
 
-**Für SFTP (empfohlen):**
+Es werden genau **drei** Secrets benötigt:
 
 | Secret | Beispiel |
 | --- | --- |
-| `FTP_PROTOCOL` | `sftp` |
-| `SFTP_HOST` | `ssh.meinedomain.de` |
-| `SFTP_USERNAME` | `benutzer123` |
-| `SFTP_PASSWORD` | *oder* `SFTP_PRIVATE_KEY` |
-| `SFTP_PORT` | `22` |
-| `SFTP_REMOTE_DIR` | `/httpdocs/` |
+| `FTP_SERVER` | `w021c706.kasserver.com` – nur der Hostname, **ohne** `ftp://` |
+| `FTP_USERNAME` | der FTP-Benutzer |
+| `FTP_PASSWORD` | das FTP-Passwort |
 
-**Für FTPS/FTP:** `FTP_PROTOCOL`, `FTP_SERVER`, `FTP_USERNAME`,
-`FTP_PASSWORD`, `FTP_PORT`, `FTP_REMOTE_DIR`.
+Protokoll (explizites FTPS), Port (21) und Zielverzeichnis (`/`) stehen fest
+im Workflow und brauchen keine Secrets.
 
-Zusätzlich als **Variable** (nicht als Secret), falls die Seite in einem
-Unterordner liegt:
+> Das Zielverzeichnis ist `/`, weil der FTP-Benutzer bei ALL-INKL bereits auf
+> das Webverzeichnis der Seite eingeschränkt ist. Die Wurzel der
+> FTP-Verbindung **ist** damit schon das Webverzeichnis.
 
-| Variable | Beispiel |
-| --- | --- |
-| `VITE_BASE_PATH` | `/silberhochzeit/` |
+**Seite in einem Unterordner?** Dann zusätzlich eine *Variable* (kein Secret)
+namens `VITE_BASE_PATH` mit z. B. `/silberhochzeit/` anlegen und im Workflow
+beim Build-Schritt durchreichen. Für den Betrieb direkt unter einer (Sub-)Domain
+ist nichts zu tun – der Standardwert `/` ist bereits richtig.
 
 ---
 

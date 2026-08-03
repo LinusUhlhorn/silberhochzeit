@@ -1,305 +1,103 @@
-name: Build & Deployment
+name: Website veröffentlichen
 
 # ---------------------------------------------------------------------------
-#  Baut die Website und laedt AUSSCHLIESSLICH den Inhalt von dist/
-#  auf den Webspace.
+#  Baut die Website und überträgt AUSSCHLIESSLICH den INHALT von dist/
+#  per explizitem FTPS auf den ALL-INKL-Webspace.
 #
-#  Ausgeloest wird der Ablauf:
+#  Ausgelöst wird der Ablauf:
 #    * bei jedem Push auf den Branch main
-#    * manuell ueber den Reiter "Actions" (workflow_dispatch)
+#    * manuell über Actions -> "Website veröffentlichen" -> "Run workflow"
 #
-#  Es werden KEINE Zugangsdaten im Repository gespeichert.
-#  Alle Werte kommen aus GitHub Repository Secrets.
-#  Siehe DEPLOYMENT.md fuer die Einrichtung.
+#  Benötigte GitHub Secrets (Settings -> Secrets and variables -> Actions):
+#    FTP_SERVER    z. B. w021c706.kasserver.com   (nur Hostname, ohne ftp://)
+#    FTP_USERNAME  der FTP-Benutzer
+#    FTP_PASSWORD  das FTP-Passwort
+#
+#  Der FTP-Benutzer ist bei ALL-INKL bereits auf das Zielverzeichnis der
+#  Website eingeschränkt. Innerhalb der FTP-Verbindung ist die Wurzel damit
+#  bereits das Webverzeichnis – deshalb ist server-dir hier "/".
+#
+#  Es werden keine Zugangsdaten im Repository gespeichert und keine
+#  geheimen Werte in die Protokolle geschrieben.
 # ---------------------------------------------------------------------------
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      grund:
-        description: 'Grund für das manuelle Deployment (optional)'
-        required: false
-        default: 'Manuell ausgelöst'
 
-# Nur ein Deployment gleichzeitig. Laeuft noch eines, wird es abgebrochen –
-# sonst koennten sich zwei Uploads auf dem Webspace ins Gehege kommen.
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
-
-# Der Workflow braucht nur Lesezugriff auf das Repository.
 permissions:
   contents: read
 
+# Nur ein Deployment gleichzeitig – sonst könnten sich zwei Uploads
+# auf dem Webspace gegenseitig überholen.
+concurrency:
+  group: production-deployment
+  cancel-in-progress: true
+
 jobs:
-  # =========================================================================
-  #  1. BAUEN
-  # =========================================================================
-  build:
-    name: Website bauen
+  build-and-deploy:
+    name: Bauen und veröffentlichen
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      - name: Quellcode auschecken
+      - name: Repository auschecken
         uses: actions/checkout@v4
 
       - name: Node.js einrichten
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          # "20" löst auf die neueste 20.x auf. Vite 8 verlangt ^20.19.0,
+          # das ist damit erfüllt. Node 22 funktioniert ebenfalls.
+          node-version: 20
+          cache: npm
 
       - name: Abhängigkeiten installieren
         run: npm ci
 
-      - name: Typen prüfen und Website bauen
-        env:
-          # Basis-URL der Website.
-          #
-          #   Website liegt direkt unter der Domain  -> "/"  (Standard)
-          #   Website liegt in einem Unterordner     -> "/silberhochzeit/"
-          #
-          # Eingestellt wird das als Repository-Variable (NICHT als Secret):
-          # Settings -> Secrets and variables -> Actions -> Variables
-          # -> New repository variable -> Name: VITE_BASE_PATH
-          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
+      # Das Projekt liegt im Wurzelverzeichnis des Repositorys
+      # (package.json, vite.config.ts und index.html liegen dort),
+      # deshalb ist kein working-directory nötig.
+      #
+      # VITE_BASE_PATH wird bewusst NICHT gesetzt: Die Seite liegt direkt
+      # unter der (Sub-)Domain, der Standardwert "/" ist also korrekt.
+      - name: Website bauen
         run: npm run build
 
-      - name: Ergebnis prüfen
+      - name: Build prüfen
+        shell: bash
         run: |
-          set -euo pipefail
-          if [ ! -f dist/index.html ]; then
-            echo "::error::dist/index.html fehlt – der Build ist fehlgeschlagen."
-            exit 1
-          fi
-          echo "Inhalt von dist/:"
-          ls -lh dist/
+          set -e
+          test -d dist
+          test -f dist/index.html
+          echo "Build erfolgreich. Dateien in dist:"
+          find dist -maxdepth 3 -type f | sort
           echo "Gesamtgröße: $(du -sh dist | cut -f1)"
 
-      - name: Build-Ergebnis als Artefakt sichern
-        uses: actions/upload-artifact@v4
+      - name: Website per FTPS veröffentlichen
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
-          name: website-dist
-          path: dist/
-          retention-days: 7
-          if-no-files-found: error
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
 
-  # =========================================================================
-  #  2. VEROEFFENTLICHEN
-  # =========================================================================
-  deploy:
-    name: Auf Webspace übertragen
-    runs-on: ubuntu-latest
-    needs: build
-    # Nur der Hauptbranch wird veroeffentlicht. Ein manueller Start auf einem
-    # anderen Branch baut zwar, laedt aber nichts hoch.
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Build-Ergebnis herunterladen
-        uses: actions/download-artifact@v4
-        with:
-          name: website-dist
-          path: dist
-
-      # -------------------------------------------------------------------
-      #  Protokoll bestimmen
-      #
-      #  Reihenfolge der Bevorzugung: sftp > ftps > ftp
-      #  Ohne Angabe wird ftps verwendet – das ist bei den meisten
-      #  Webhostern der sicherste sofort verfuegbare Weg.
-      # -------------------------------------------------------------------
-      - name: Protokoll und Zielordner bestimmen
-        id: konfiguration
-        env:
-          PROTOKOLL_SECRET: ${{ secrets.FTP_PROTOCOL }}
-          PROTOKOLL_VAR: ${{ vars.FTP_PROTOCOL }}
-          ZIELORDNER: ${{ secrets.SFTP_REMOTE_DIR || secrets.FTP_REMOTE_DIR }}
-          HOST: ${{ secrets.SFTP_HOST || secrets.FTP_SERVER }}
-          BENUTZER: ${{ secrets.SFTP_USERNAME || secrets.FTP_USERNAME }}
-          # Der Schluessel selbst wird hier NICHT ausgegeben – nur die
-          # Information, ob es ihn gibt. Der secrets-Kontext steht in
-          # if-Bedingungen einzelner Schritte naemlich nicht zur Verfuegung,
-          # deshalb wird diese Entscheidung hier vorbereitet.
-          PRIVATER_SCHLUESSEL: ${{ secrets.SFTP_PRIVATE_KEY }}
-        run: |
-          set -euo pipefail
-
-          protokoll="${PROTOKOLL_SECRET:-${PROTOKOLL_VAR:-ftps}}"
-          protokoll="$(echo "$protokoll" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
-
-          case "$protokoll" in
-            sftp|ftps|ftp) ;;
-            *)
-              echo "::error::Unbekanntes Protokoll '$protokoll'. Erlaubt: sftp, ftps, ftp."
-              exit 1
-              ;;
-          esac
-
-          if [ -z "${HOST:-}" ]; then
-            echo "::error::Kein Server hinterlegt. Bitte Secret SFTP_HOST bzw. FTP_SERVER anlegen."
-            exit 1
-          fi
-
-          if [ -z "${BENUTZER:-}" ]; then
-            echo "::error::Kein Benutzername hinterlegt. Bitte Secret SFTP_USERNAME bzw. FTP_USERNAME anlegen."
-            exit 1
-          fi
-
-          # Zielordner: Standard ist das uebliche Webverzeichnis.
-          # Ein abschliessender Schraegstrich ist Pflicht.
-          ordner="${ZIELORDNER:-/}"
-          case "$ordner" in
-            */) ;;
-            *) ordner="${ordner}/" ;;
-          esac
-
-          # Sicherheitsnetz: ein leerer oder unsinniger Zielordner koennte
-          # dazu fuehren, dass Dateien an der falschen Stelle landen.
-          if [ "$ordner" = "//" ]; then
-            echo "::error::Ungültiger Zielordner."
-            exit 1
-          fi
-
-          if [ -n "${PRIVATER_SCHLUESSEL:-}" ]; then
-            schluessel="ja"
-          else
-            schluessel="nein"
-          fi
-
-          {
-            echo "protokoll=$protokoll"
-            echo "zielordner=$ordner"
-            echo "schluessel=$schluessel"
-          } >> "$GITHUB_OUTPUT"
-
-          echo "Protokoll:        $protokoll"
-          echo "Zielordner:       $ordner"
-          echo "SSH-Schlüssel:    $schluessel"
-
-      # ===================================================================
-      #  Variante A – SFTP mit SSH-Schlüssel (bevorzugt)
-      # ===================================================================
-      - name: SSH-Schlüssel einrichten
-        if: steps.konfiguration.outputs.protokoll == 'sftp' && steps.konfiguration.outputs.schluessel == 'ja'
-        env:
-          PRIVATER_SCHLUESSEL: ${{ secrets.SFTP_PRIVATE_KEY }}
-          HOST: ${{ secrets.SFTP_HOST || secrets.FTP_SERVER }}
-          PORT: ${{ secrets.SFTP_PORT || secrets.FTP_PORT || '22' }}
-        run: |
-          set -euo pipefail
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "$PRIVATER_SCHLUESSEL" > ~/.ssh/id_deploy
-          chmod 600 ~/.ssh/id_deploy
-
-          # Hostschluessel des Servers eintragen, damit die Verbindung
-          # geprueft wird. Ohne diesen Schritt muesste die Pruefung
-          # abgeschaltet werden – das waere unsicher.
-          ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          chmod 600 ~/.ssh/known_hosts
-
-      - name: Übertragen per SFTP (SSH-Schlüssel)
-        if: steps.konfiguration.outputs.protokoll == 'sftp' && steps.konfiguration.outputs.schluessel == 'ja'
-        env:
-          HOST: ${{ secrets.SFTP_HOST || secrets.FTP_SERVER }}
-          BENUTZER: ${{ secrets.SFTP_USERNAME || secrets.FTP_USERNAME }}
-          PORT: ${{ secrets.SFTP_PORT || secrets.FTP_PORT || '22' }}
-          ZIEL: ${{ steps.konfiguration.outputs.zielordner }}
-        run: |
-          set -euo pipefail
-
-          # Nur der INHALT von dist/ wird uebertragen – der abschliessende
-          # Schraegstrich hinter "dist/" ist dafuer entscheidend.
-          # Bewusst OHNE --delete: so wird auf dem Webspace nichts geloescht,
-          # was nicht aus diesem Projekt stammt. Siehe DEPLOYMENT.md.
-          rsync -rlvz --checksum \
-            -e "ssh -i ~/.ssh/id_deploy -p $PORT -o StrictHostKeyChecking=yes" \
-            dist/ "$BENUTZER@$HOST:$ZIEL"
-
-      # ===================================================================
-      #  Variante B – SFTP mit Passwort
-      # ===================================================================
-      - name: Übertragen per SFTP (Passwort)
-        if: steps.konfiguration.outputs.protokoll == 'sftp' && steps.konfiguration.outputs.schluessel == 'nein'
-        env:
-          HOST: ${{ secrets.SFTP_HOST || secrets.FTP_SERVER }}
-          BENUTZER: ${{ secrets.SFTP_USERNAME || secrets.FTP_USERNAME }}
-          PASSWORT: ${{ secrets.SFTP_PASSWORD || secrets.FTP_PASSWORD }}
-          PORT: ${{ secrets.SFTP_PORT || secrets.FTP_PORT || '22' }}
-          ZIEL: ${{ steps.konfiguration.outputs.zielordner }}
-        run: |
-          set -euo pipefail
-
-          if [ -z "${PASSWORT:-}" ]; then
-            echo "::error::Weder SFTP_PRIVATE_KEY noch SFTP_PASSWORD ist hinterlegt."
-            exit 1
-          fi
-
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq lftp
-
-          # lftp bricht bei Fehlern ab (set cmd:fail-exit).
-          # mirror -R spiegelt lokal -> entfernt, nur den Inhalt von dist/.
-          lftp -c "
-            set cmd:fail-exit yes;
-            set sftp:auto-confirm yes;
-            set net:max-retries 3;
-            set net:timeout 20;
-            open -u '$BENUTZER','$PASSWORT' -p $PORT sftp://$HOST;
-            mirror --reverse --verbose --parallel=2 dist/ '$ZIEL';
-            bye
-          "
-
-      # ===================================================================
-      #  Variante C – FTPS bzw. FTP
-      # ===================================================================
-      - name: Übertragen per FTPS / FTP
-        if: steps.konfiguration.outputs.protokoll == 'ftps' || steps.konfiguration.outputs.protokoll == 'ftp'
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER || secrets.SFTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME || secrets.SFTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD || secrets.SFTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || '21' }}
-          protocol: ${{ steps.konfiguration.outputs.protokoll }}
-
-          # Der abschliessende Schraegstrich ist wichtig: nur der INHALT
-          # von dist/ wird uebertragen, nicht der Ordner selbst.
+          # Der abschließende Schrägstrich ist entscheidend: So wird der
+          # INHALT von dist/ übertragen und nicht der Ordner dist selbst.
           local-dir: ./dist/
-          server-dir: ${{ steps.konfiguration.outputs.zielordner }}
 
-          # Sicherheitsnetz: selbst wenn versehentlich mehr als dist/
-          # vorliegt, landen diese Dateien nicht auf dem Webspace.
+          # Der FTP-Benutzer ist bereits auf das Webverzeichnis beschränkt.
+          server-dir: /
+
+          # Diese Dateien dokumentieren nur die Projektordner und haben
+          # auf dem Webspace nichts verloren.
           exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/src/**
-            **/*.map
-            **/.env*
-            **/*.ts
-            **/*.tsx
+            **/README.md
 
-          # Ueberträgt nur geaenderte Dateien (Vergleich ueber eine
-          # Statusdatei auf dem Server). Beschleunigt jedes Deployment
-          # nach dem ersten deutlich.
-          state-name: .ftp-deploy-sync-state.json
+          # Überträgt nach dem ersten Mal nur noch geänderte Dateien.
+          # Es wird auf dem Server nichts gelöscht.
           dangerous-clean-slate: false
-          dry-run: false
           log-level: standard
-
-      - name: Zusammenfassung
-        run: |
-          {
-            echo "### Deployment abgeschlossen"
-            echo ""
-            echo "| Feld | Wert |"
-            echo "| --- | --- |"
-            echo "| Protokoll | \`${{ steps.konfiguration.outputs.protokoll }}\` |"
-            echo "| Zielordner | \`${{ steps.konfiguration.outputs.zielordner }}\` |"
-            echo "| Basis-URL | \`${{ vars.VITE_BASE_PATH || '/' }}\` |"
-            echo "| Commit | \`${{ github.sha }}\` |"
-          } >> "$GITHUB_STEP_SUMMARY"
