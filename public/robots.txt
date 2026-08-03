@@ -1,0 +1,5 @@
+# Datensparsame Voreinstellung: Die Seite soll nicht in Suchmaschinen auftauchen.
+# Soll sie oeffentlich auffindbar sein, "Disallow: /" entfernen UND in
+# index.html die Zeile <meta name="robots" content="noindex, nofollow" /> loeschen.
+User-agent: *
+Disallow: /

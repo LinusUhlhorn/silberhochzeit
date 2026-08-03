@@ -1,0 +1,103 @@
+name: Website veröffentlichen
+
+# ---------------------------------------------------------------------------
+#  Baut die Website und überträgt AUSSCHLIESSLICH den INHALT von dist/
+#  per explizitem FTPS auf den ALL-INKL-Webspace.
+#
+#  Ausgelöst wird der Ablauf:
+#    * bei jedem Push auf den Branch main
+#    * manuell über Actions -> "Website veröffentlichen" -> "Run workflow"
+#
+#  Benötigte GitHub Secrets (Settings -> Secrets and variables -> Actions):
+#    FTP_SERVER    z. B. w021c706.kasserver.com   (nur Hostname, ohne ftp://)
+#    FTP_USERNAME  der FTP-Benutzer
+#    FTP_PASSWORD  das FTP-Passwort
+#
+#  Der FTP-Benutzer ist bei ALL-INKL bereits auf das Zielverzeichnis der
+#  Website eingeschränkt. Innerhalb der FTP-Verbindung ist die Wurzel damit
+#  bereits das Webverzeichnis – deshalb ist server-dir hier "/".
+#
+#  Es werden keine Zugangsdaten im Repository gespeichert und keine
+#  geheimen Werte in die Protokolle geschrieben.
+# ---------------------------------------------------------------------------
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Nur ein Deployment gleichzeitig – sonst könnten sich zwei Uploads
+# auf dem Webspace gegenseitig überholen.
+concurrency:
+  group: production-deployment
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Bauen und veröffentlichen
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          # "20" löst auf die neueste 20.x auf. Vite 8 verlangt ^20.19.0,
+          # das ist damit erfüllt. Node 22 funktioniert ebenfalls.
+          node-version: 20
+          cache: npm
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      # Das Projekt liegt im Wurzelverzeichnis des Repositorys
+      # (package.json, vite.config.ts und index.html liegen dort),
+      # deshalb ist kein working-directory nötig.
+      #
+      # VITE_BASE_PATH wird bewusst NICHT gesetzt: Die Seite liegt direkt
+      # unter der (Sub-)Domain, der Standardwert "/" ist also korrekt.
+      - name: Website bauen
+        run: npm run build
+
+      - name: Build prüfen
+        shell: bash
+        run: |
+          set -e
+          test -d dist
+          test -f dist/index.html
+          echo "Build erfolgreich. Dateien in dist:"
+          find dist -maxdepth 3 -type f | sort
+          echo "Gesamtgröße: $(du -sh dist | cut -f1)"
+
+      - name: Website per FTPS veröffentlichen
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+
+          # Der abschließende Schrägstrich ist entscheidend: So wird der
+          # INHALT von dist/ übertragen und nicht der Ordner dist selbst.
+          local-dir: ./dist/
+
+          # Der FTP-Benutzer ist bereits auf das Webverzeichnis beschränkt.
+          server-dir: /
+
+          # Diese Dateien dokumentieren nur die Projektordner und haben
+          # auf dem Webspace nichts verloren.
+          exclude: |
+            **/README.md
+
+          # Überträgt nach dem ersten Mal nur noch geänderte Dateien.
+          # Es wird auf dem Server nichts gelöscht.
+          dangerous-clean-slate: false
+          log-level: standard
