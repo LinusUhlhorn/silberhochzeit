@@ -1,5 +1,10 @@
 # Datensparsame Voreinstellung: Die Seite soll nicht in Suchmaschinen auftauchen.
 # Soll sie oeffentlich auffindbar sein, "Disallow: /" entfernen UND in
 # index.html die Zeile <meta name="robots" content="noindex, nofollow" /> loeschen.
+# Die Eintraege fuer /admin.html, /api/ und /uploads/ sollten in jedem Fall bleiben.
 User-agent: *
 Disallow: /
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /daten/
