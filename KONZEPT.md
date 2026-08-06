@@ -17,8 +17,9 @@ Informationen zur Feier und lädt die Gäste zum Mitmachen ein.
 Drei Aufgaben erfüllt die Seite gleichzeitig:
 
 1. **Erzählen** – Geschichte, Bilder, Zahlen, Anekdoten.
-2. **Informieren** – Datum, Ort, Anfahrt, Dresscode, Ansprechpartner.
-3. **Einbinden** – Quiz, Grüße, digitale Fotowand.
+2. **Einbinden** – Quiz und Gästewand zum Mitschreiben.
+3. **Sammeln** – Grüße und Fotos der Gäste an einem Ort, statt verstreut
+   auf zwanzig Handys.
 
 Die Seite ist eine One-Page-Website. Alles liegt auf einer Ebene, die Gäste
 scrollen durch die Geschichte – das ist bewusst gewählt: kein Verirren in
@@ -31,16 +32,16 @@ Die Reihenfolge der Abschnitte folgt einer bewussten Kurve:
 
 ```
 Emotion  ▁▂▄▆█  Hero, Begrüßung
-Erzählen ▆▆▆▆▆  Timeline, Zahlen, Galerie, Damals & heute
-Spielen  ▄▅▆▅▄  25 Dinge, Quiz, Grüße
-Handeln  ▂▂▂▂▂  Feierinfos, Fotowand
+Erzählen ▆▆▆▆▆  Timeline, Zahlen, Damals & heute
+Spielen  ▄▅▆▅▄  25 Dinge, Quiz
+Mitmachen ▆▇█▇▆ Gästewand
 Emotion  ▄▆█▆▄  Abschluss, Footer
 ```
 
-Erst das Gefühl, dann die Geschichte, dann das Spiel, dann die Organisation –
-und zum Schluss wieder das Gefühl. Die nüchternen Feierinformationen stehen
-bewusst weit unten, aber die Navigation springt mit einem Klick dorthin, damit
-niemand für die Adresse durch die ganze Geschichte scrollen muss.
+Erst das Gefühl, dann die Geschichte, dann das Spiel, dann das Mitmachen –
+und zum Schluss wieder das Gefühl. Die Gästewand steht bewusst spät: Wer
+vorher durch 25 Jahre gescrollt ist, hat mehr zu schreiben als jemand, der
+sofort ein leeres Feld sieht.
 
 ---
 
@@ -48,10 +49,10 @@ niemand für die Adresse durch die ganze Geschichte scrollen muss.
 
 | Gruppe | Anteil | Bedürfnis | Konsequenz fürs Design |
 |---|---|---|---|
-| Familie, enge Freunde | groß | Erinnerungen, Bilder, Emotion | Galerie, Timeline, große Bilder |
-| Geladene Gäste | groß | Wann? Wo? Was anziehen? Geschenk? | Feierinfos schnell erreichbar, Maps-Button |
+| Familie, enge Freunde | groß | Erinnerungen, Bilder, Emotion | Timeline, Damals & heute, Gästewand |
+| Geladene Gäste | groß | etwas beitragen, Fotos teilen | Gästewand direkt in der Navigation |
 | Ältere Gäste (60+) | relevant | Lesbarkeit, keine Überraschungen | große Schrift, hoher Kontrast, keine versteckten Gesten |
-| Kinder/Jugendliche | klein | Spaß, Mitmachen | Quiz, Fotowand |
+| Kinder/Jugendliche | klein | Spaß, Mitmachen | Quiz, Fotos hochladen |
 
 **Wichtigste Einschränkung:** Ein spürbarer Teil der Gäste ist über 60 und
 öffnet die Seite auf dem Smartphone über einen WhatsApp-Link. Daraus folgt:
@@ -183,20 +184,20 @@ One-Page mit 13 Abschnitten. Nummerierung sichtbar als Eyebrow-Ziffer.
 | 01 | Begrüßung | `#begruessung` | — | Ankommen, Zitat |
 | 02 | Unsere Geschichte (Timeline) | `#geschichte` | ✔ Geschichte | Erzählkern |
 | 03 | 25 Jahre in Zahlen | `#zahlen` | — | Auflockerung, Humor |
-| 04 | Fotogalerie | `#galerie` | ✔ Galerie | Emotion, Bilder |
-| 05 | Damals & heute | `#damals-heute` | ✔ Damals & heute | Vergleich, Schmunzeln |
-| 06 | 25 Dinge über Britta & Lutz | `#fakten` | — | Persönlichkeit, Humor |
-| 07 | Gästequiz | `#quiz` | ✔ Quiz | Interaktion |
-| 08 | Grüße | `#gruesse` | ✔ Grüße | Gemeinschaft |
-| 09 | Feierinformationen | `#feier` | ✔ Feier | Organisation |
-| 10 | Digitale Fotowand | `#fotowand` | — | Mitmachen am Festtag |
-| 11 | Abschluss | `#abschluss` | — | Emotionaler Ausklang |
+| 04 | Damals & heute | `#damals-heute` | ✔ Damals & heute | Vergleich, Schmunzeln |
+| 05 | 25 Dinge über Britta & Lutz | `#fakten` | — | Persönlichkeit, Humor |
+| 06 | Gästequiz | `#quiz` | ✔ Quiz | Interaktion |
+| 07 | Gästewand | `#gaestewand` | ✔ Gästewand | Grüße und Fotos der Gäste |
+| 08 | Abschluss | `#abschluss` | — | Emotionaler Ausklang |
 | — | Footer | — | — | Abbinder |
 
-Die Navigation zeigt bewusst **nur 6 von 12 Ankern**. Eine Navigationsleiste
-mit zwölf Einträgen wäre auf dem Desktop gedrängt und auf dem Smartphone
-unbrauchbar. Die sechs gezeigten sind die, nach denen tatsächlich gesucht wird;
-die übrigen Abschnitte werden beim Scrollen ohnehin durchlaufen.
+Dazu eine zweite, nicht verlinkte Seite: **`/admin.html`** zur Verwaltung der
+Gästewand (passwortgeschützt).
+
+Die Navigation zeigt bewusst **nur 4 von 9 Ankern**. Eine volle
+Navigationsleiste wäre auf dem Smartphone unbrauchbar. Die vier gezeigten sind
+die, nach denen tatsächlich gesucht wird; die übrigen Abschnitte werden beim
+Scrollen ohnehin durchlaufen.
 
 Zusätzliche globale Elemente: `ScrollProgress` (Fortschrittsbalken oben),
 `BackToTopButton` (erscheint ab ca. 800 px Scrolltiefe).
@@ -248,12 +249,12 @@ Information.
 |---|---|---|---|
 | Navigation | Anker + Smooth Scroll, aktive Sektion via IntersectionObserver | Tab, Enter | Anker funktionieren ohne JS-Logik |
 | Hamburger-Menü | Öffnen/Schließen, Fokus-Falle, Escape schließt | vollständig | — |
-| Galerie-Lightbox | Klick öffnet, Pfeile/Wischen navigieren, Escape/Klick außen schließt | ←/→/Esc, Fokus-Rückgabe | Bild bleibt im Grid sichtbar |
+| Lightbox der Gästefotos | Klick öffnet, Pfeile/Wischen navigieren, Escape/Klick außen schließt | ←/→/Esc, Fokus-Rückgabe | Bild bleibt in der Karte sichtbar |
 | Damals & heute | Ziehbarer Vergleichs-Slider | ←/→ steuern den Slider | zwei Bilder nebeneinander bei fehlendem Pointer-Support |
 | 25 Dinge | Karten aufklappen (Antwort erscheint) | Enter/Space | Antwort ist im DOM, per `aria-expanded` gesteuert |
 | Quiz | Antwort wählen → Feedback → weiter → Ergebnis → Neustart | vollständig | — |
 | Statistik-Karten | Count-up beim Scrollen | — | Zielzahl steht sofort |
-| Fotowand | Upload-Button, deaktiviert solange kein Link gesetzt | vollständig | freundlicher Hinweistext |
+| Gästewand-Formular | Name, Text, bis zu 5 Fotos; Fortschrittsanzeige beim Senden | vollständig | Fehlermeldung im Klartext |
 | Back-to-Top | Klick scrollt nach oben | Tab, Enter | — |
 
 **Barrierefreiheits-Regeln, die für alle gelten:**
@@ -272,13 +273,12 @@ Information.
 
 **Bildsprache:** echte Fotos, keine Stockbilder. Lieber ein leicht unscharfes
 Familienfoto von 2003 als ein perfektes Symbolbild. Warme, natürliche Töne;
-keine starken Filter; keine schwarz-weiß/farbig gemischte Galerie (entweder
-durchgehend oder gar nicht).
+keine starken Filter.
 
 **Technisch:**
 
 - Format: JPG (breite Kompatibilität), Qualität ca. 80
-- Galerie: längste Kante ca. 1600 px, Ziel < 300 KB pro Bild
+- Gästefotos: werden serverseitig auf 1800 px verkleinert und neu berechnet
 - Hero: ca. 2400 px breit, Ziel < 500 KB
 - `loading="lazy"` und `decoding="async"` für alles außer dem Hero-Bild
 - der Hero bekommt `fetchpriority="high"` und kein Lazy Loading
@@ -298,8 +298,7 @@ für die Abnahme durch die Familie wichtig.
 | `hero.jpg` | Britta & Lutz, aktuell, querformat, Platz für Text | 16:9 quer | hoch |
 | `damals.jpg` | Paarfoto aus der Zeit um die Hochzeit (2001) | 4:3 | hoch |
 | `heute.jpg` | aktuelles Paarfoto, **gleicher Bildausschnitt wie „damals"** | 4:3 | hoch |
-| `gallery-01…12.jpg` | Querschnitt durch 25 Jahre | gemischt | hoch |
-| `qr-fotowand.png` | QR-Code zur Fotowand | quadratisch | mittel |
+| `qr-gaestewand.png` | QR-Code zur Gästewand | quadratisch | mittel |
 | `og-image.jpg` | Vorschaubild für WhatsApp/Social | 1200×630 | mittel |
 
 Für „Damals & heute" ist der gleiche Bildausschnitt der entscheidende Punkt –
@@ -339,7 +338,7 @@ im Projekt vor.
 
 ### Optional
 
-- [ ] Upload-Link für die Fotowand + zugehöriger QR-Code
+- [ ] QR-Code zur Gästewand (`qr-gaestewand.png`)
 - [ ] Ablauf/Programm des Festes
 - [ ] Übernachtungsmöglichkeiten für Gäste von weiter weg
 - [ ] Hinweis zu Kindern auf der Feier
@@ -401,7 +400,7 @@ Veröffentlichung zustimmen.
 | Animation | Framer Motion | deklarativ, `useReducedMotion` eingebaut |
 | Icons | Lucide React | dezent, strichbasiert, passt zum Stil |
 | Routing | keins | One-Page, nur Anker – kein SPA-Fallback nötig |
-| Backend | keins | statischer Webspace genügt |
+| Backend | schlankes PHP | Upload und Admin brauchen Serverlogik; ALL-INKL bietet PHP ohne Aufpreis |
 | Tracking | keins | keine Cookies, kein Consent-Banner nötig |
 | Fonts | selbst gehostet | keine Drittanbieter-Verbindung |
 | Base-Path | `VITE_BASE_PATH`, Default `/` | Unterordner-Betrieb möglich |
@@ -429,12 +428,13 @@ Textänderung das Layout kaputt machen kann.
 
 Damit klar ist, was die Seite **nicht** wird – und warum:
 
-- **kein Login / kein Gästebereich** – Aufwand und Hürde stehen in keinem
-  Verhältnis zum Nutzen bei einer Familienfeier
-- **kein RSVP-Formular** – bräuchte ein Backend oder einen Drittanbieter;
-  Zu- und Absagen laufen über den genannten Ansprechpartner
-- **kein eigener Foto-Upload-Server** – bewusst ausgelagert an einen
-  Cloud-Ordner, der zur Feier verlinkt wird
+- **kein Gäste-Login** – die Hürde stünde in keinem Verhältnis zum Nutzen.
+  Wer den Link hat, darf schreiben; ein optionaler Zugangscode reicht als
+  Schutz.
+- **kein RSVP-Formular** – Zu- und Absagen laufen persönlich
+- **keine Datenbank** – ein JSON je Beitrag genügt für eine Familienfeier und
+  spart dem Betreiber jede Einrichtung. Bei einigen hundert Beiträgen ist das
+  schneller als eine Datenbankverbindung.
 - **kein Countdown-Timer** – wirkt bei einer Silberhochzeit nach Marketing
 - **kein Musik-Autoplay** – überrascht Gäste in der Öffentlichkeit unangenehm
 - **keine Mehrsprachigkeit** – die Gästeliste ist deutschsprachig
