@@ -1,0 +1,95 @@
+# ===========================================================================
+#  Serverkonfiguration der Website (Apache, z. B. ALL-INKL)
+#
+#  Diese Datei wird bei jedem Deployment mit hochgeladen.
+#  Die Ordner `daten/` und `uploads/` bringen zusaetzlich eigene
+#  .htaccess-Dateien mit, die PHP beim ersten Aufruf selbst anlegt.
+# ===========================================================================
+
+# Verzeichnisauflistungen abschalten – sonst kann jeder sehen,
+# welche Dateien auf dem Webspace liegen.
+Options -Indexes
+
+# ---------------------------------------------------------------------------
+#  Sicherheits-Header
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    # Browser sollen den Dateityp nicht raten. Verhindert, dass eine
+    # harmlose Datei als Skript ausgefuehrt wird.
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Die Seite darf nicht in fremde Rahmen eingebettet werden.
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Beim Verlassen der Seite keine vollstaendige Adresse weitergeben.
+    Header always set Referrer-Policy "same-origin"
+
+    # Keine Kamera-, Mikrofon- oder Ortungsrechte anfordern.
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+
+    # Inhaltsrichtlinie: Es duerfen ausschliesslich eigene Dateien geladen
+    # werden. Damit koennen selbst dann keine fremden Skripte laufen, wenn
+    # es jemandem gelaenge, Code in die Seite zu bekommen.
+    #
+    # 'unsafe-inline' bei style-src ist noetig, weil React einzelne
+    # Elemente ueber das style-Attribut positioniert (z. B. den Regler
+    # bei „Damals & heute“).
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'self'; base-uri 'self'; object-src 'none'"
+</IfModule>
+
+# ---------------------------------------------------------------------------
+#  Zweite Sperre fuer das Datenverzeichnis
+#  (die erste liegt in daten/.htaccess und wird von PHP angelegt)
+# ---------------------------------------------------------------------------
+RedirectMatch 404 (^|/)daten(/|$)
+
+# Konfigurations- und Systemdateien niemals ausliefern.
+<FilesMatch "^(config\.php|\.env.*|.*\.json|SETUP-ERLAUBT)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ---------------------------------------------------------------------------
+#  Komprimierung
+# ---------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain
+    AddOutputFilterByType DEFLATE application/javascript application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ---------------------------------------------------------------------------
+#  Zwischenspeicher im Browser
+#
+#  Die Dateinamen von JavaScript und CSS enthalten einen Inhalts-Hash und
+#  aendern sich bei jeder Aenderung. Sie duerfen deshalb lange
+#  zwischengespeichert werden. Die HTML-Datei dagegen nie – sonst sehen
+#  Besucher nach einem Deployment noch die alte Fassung.
+# ---------------------------------------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# ---------------------------------------------------------------------------
+#  Zeichensatz
+# ---------------------------------------------------------------------------
+AddDefaultCharset UTF-8

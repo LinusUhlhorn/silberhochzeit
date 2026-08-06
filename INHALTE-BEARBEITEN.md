@@ -33,7 +33,7 @@ Details. Sie dürfen natürlich trotzdem geändert werden.
 | Zahlen | „25 Jahre“, „~9.125 Tage“, „~1.300 Sonntage“, „unzählige Erinnerungen“ |
 | Damals & heute | Begleittext |
 | Quiz | Einleitung, Ergebnistexte, Bedienelemente |
-| Fotowand | Erklärtext, Hinweis „Der Foto-Upload wird zur Feier freigeschaltet.“ |
+| Gästewand | Erklärtext, Beschriftungen des Formulars |
 | Abschluss | Schlusstext und Botschaft an Britta & Lutz |
 | Fußzeile | „Silberhochzeit von Britta & Lutz“, „Drentwede · 2026“, „Mit Liebe erstellt“ |
 
@@ -47,24 +47,18 @@ markiert.
 | --- | --- |
 | Zeitstrahl | **alle acht Stationen** samt Jahreszahlen (1997, 1998, 2001, 2002, 2004, 2011, 2018) |
 | Zahlen | „30+ Reisen“, „100+ Familienfeste“ |
-| Galerie | alle Bildunterschriften und Jahreszahlen |
 | 25 Dinge | **alle 25 Antworten** |
 | Quiz | 6 von 9 Fragen (die persönlichen) |
-| Grüße | **alle 6 Grüße samt Absendern** |
-| Feier | **alle Angaben** (Datum, Uhrzeit, Ort, Parken, Dresscode, Kontakt, Geschenke) |
 
 ### 🔴 Muss unbedingt ersetzt werden
 
 Ohne diese Angaben sollte die Seite nicht an Gäste verschickt werden:
 
-- [ ] Datum und Uhrzeit der Feier
-- [ ] Veranstaltungsort mit vollständiger Adresse
-- [ ] Ansprechpartner für Zu- und Absagen (Name + Telefon oder E-Mail)
-- [ ] Rückmeldefrist
-- [ ] Google-Maps-Link
 - [ ] Das echte Hochzeitsjahr (aktuell ist **2001** angenommen)
-- [ ] Die Grüße – erfundene Grüße mit echten Namen sollten **niemals** online
-      gehen. Entweder echte Grüße einsammeln oder den Abschnitt entfernen.
+- [ ] Die echten Antworten bei „25 Dinge“ und im Quiz
+- [ ] Die Fotos für „Damals & heute“ und das Titelbild
+- [ ] Das Admin-Passwort für die Gästewand muss eingerichtet sein
+      (siehe Abschnitt 9)
 
 ---
 
@@ -156,54 +150,21 @@ funktioniert problemlos. Die Datei ist UTF-8-kodiert.
 
 ## 4. Häufige Änderungen im Überblick
 
-### Feierdaten eintragen
+### Beschriftungen der Gästewand ändern
 
-Im Abschnitt `feier:` → `details:`. Jede Karte hat `zeilen` – die erste Zeile
-wird groß dargestellt, die weiteren klein darunter.
-
-```ts
-{
-  id: 'datum',
-  icon: 'kalender',
-  label: 'Datum',
-  zeilen: ['Samstag, 12. September 2026', 'Beginn um 15 Uhr'],
-  // entwurf: true,   ← nach dem Eintragen löschen
-},
-```
-
-Eine Karte ganz entfernen? Den kompletten Block von `{` bis `},` löschen.
-
-### Google-Maps-Link setzen
-
-1. Ort in Google Maps suchen.
-2. Auf „Teilen“ → „Link kopieren“.
-3. In `content.ts` einsetzen:
+Im Abschnitt `gaestewand:`. Die Beiträge selbst stehen **nicht** in dieser
+Datei – sie kommen von den Gästen und liegen auf dem Webspace.
 
 ```ts
-karte: {
-  label: 'In Google Maps öffnen',
-  url: 'https://maps.app.goo.gl/beispiel',   // ← hier
-  hinweisOhneLink: '…',
-},
-```
-
-Solange `url: ''` leer ist, erscheint statt des Buttons ein Hinweistext.
-
-### Foto-Upload freischalten
-
-```ts
-fotowand: {
-  …
-  uploadUrl: 'https://cloud.beispiel.de/upload/abc',   // ← hier
+gaestewand: {
+  ueberschrift: 'Schreibt uns etwas',
+  formular: {
+    absendenLabel: 'Beitrag senden',
+    dankeTitel: 'Vielen Dank!',
+    …
+  },
 }
 ```
-
-Solange das Feld leer ist, ist der Button ausgegraut und es steht dort
-„Der Foto-Upload wird zur Feier freigeschaltet.“
-
-Geeignet sind Ordner-Links mit Upload-Recht, z. B. bei Nextcloud, Google Drive,
-Dropbox oder WeTransfer. Passend dazu einen QR-Code erzeugen und als
-`public/images/qr-fotowand.png` ablegen.
 
 ### Quizfrage ändern
 
@@ -226,25 +187,11 @@ Pro Frage muss **genau eine** Antwort `richtig: true` haben:
 Fragen dürfen hinzugefügt oder gelöscht werden; die Fortschrittsanzeige
 rechnet automatisch mit.
 
-### Einen Gruß hinzufügen
-
-Einen vorhandenen Block kopieren und anpassen. Wichtig: die `id` muss
-eindeutig sein.
-
-```ts
-{
-  id: 'm07',                    // ← noch nicht vergeben
-  text: 'Herzlichen Glückwunsch euch beiden!',
-  absender: 'Familie Meier',
-  zusatz: 'aus Barnstorf',      // optional – Zeile darf auch weg
-},
-```
-
 ### Einen ganzen Abschnitt entfernen
 
-Zum Beispiel die Grüße, falls keine echten zusammenkommen:
-In `src/App.tsx` die Zeile `<MessagesSection />` löschen und in `content.ts`
-im Block `navigation` den passenden Eintrag entfernen.
+In `src/App.tsx` die entsprechende Zeile löschen, z. B. `<StatsSection />`,
+und in `content.ts` im Block `navigation` den passenden Eintrag entfernen,
+falls der Abschnitt im Menü stand.
 
 ---
 
@@ -257,9 +204,11 @@ Alle Bilder liegen im Ordner `public/images/`.
 | `hero.jpg` | großes Titelbild | quer, ca. 2400 px breit |
 | `damals.jpg` | Foto von damals | 4:3 |
 | `heute.jpg` | aktuelles Foto | 4:3, **gleicher Bildausschnitt wie `damals.jpg`** |
-| `gallery-01.jpg` … `gallery-12.jpg` | Galerie | gemischt |
-| `qr-fotowand.png` | QR-Code | quadratisch |
+| `qr-gaestewand.png` | QR-Code zur Gästewand | quadratisch |
 | `og-image.jpg` | Vorschaubild für WhatsApp | 1200 × 630 px |
+
+Fotos, die Gäste hochladen, landen **nicht** hier, sondern auf dem Webspace
+im Ordner `uploads/bilder/`. Sie brauchen keine Pflege.
 
 **Vorgehen:** Die eigenen Fotos genau so benennen und in den Ordner legen –
 fertig. In `content.ts` muss nichts geändert werden.
@@ -288,7 +237,7 @@ Sieht alles gut aus:
 
 ```bash
 git add .
-git commit -m "Feierdaten eingetragen"
+git commit -m "Texte überarbeitet"
 git push
 ```
 
@@ -304,7 +253,7 @@ online. Siehe `DEPLOYMENT.md`.
 | `Unterminated string literal` | Ein Anführungszeichen fehlt oder ein Apostroph im Text ist nicht maskiert | Regel 2 oben |
 | `',' expected` | Ein Komma am Zeilenende fehlt | Regel 3 oben |
 | Weiße Seite im Browser | Tippfehler in `content.ts` | Terminal zeigt Datei und Zeilennummer |
-| Bild erscheint nicht | Dateiname stimmt nicht (Groß-/Kleinschreibung!) | `gallery-01.jpg`, nicht `Gallery-01.JPG` |
+| Bild erscheint nicht | Dateiname stimmt nicht (Groß-/Kleinschreibung!) | `hero.jpg`, nicht `Hero.JPG` |
 | Änderung nicht online | Push fehlgeschlagen oder Workflow rot | Reiter „Actions“ auf GitHub prüfen |
 
 **Notausgang:** Die letzte Änderung rückgängig machen:
@@ -321,13 +270,11 @@ Geänderte ist dann allerdings weg.
 ## 8. Vor dem Verschicken an die Gäste
 
 - [ ] Keine `[Bitte anpassen: …]`-Hinweise mehr im Text
-- [ ] Keine `[Name eintragen]`-Platzhalter bei den Grüßen
-- [ ] Datum, Uhrzeit, Adresse und Ansprechpartner sind echt
-- [ ] Maps-Link führt zum richtigen Ort
 - [ ] Alle Jahreszahlen im Zeitstrahl stimmen
 - [ ] Die Antworten bei „25 Dinge“ und im Quiz stimmen
-- [ ] Alle Grüße sind echt – oder der Abschnitt ist entfernt
 - [ ] Fotos sind eingepflegt und verkleinert
+- [ ] Admin-Passwort der Gästewand ist eingerichtet (Abschnitt 9)
+- [ ] Ein Testbeitrag wurde hochgeladen und wieder gelöscht
 - [ ] Beim Entwickeln (`npm run dev`) sind keine gelben „Entwurf“-Hinweise mehr zu sehen
 - [ ] Die Seite auf einem echten Smartphone angeschaut
 - [ ] Familie ist einverstanden, welche Namen und Fotos öffentlich stehen
@@ -347,3 +294,90 @@ Die Seite ist öffentlich im Internet erreichbar. Vorab bewusst entscheiden:
 
 Bei Gruppenfotos gilt: Die abgebildeten Personen sollten mit der
 Veröffentlichung einverstanden sein.
+
+---
+
+## 9. Gästewand verwalten
+
+Auf der Gästewand hinterlassen Gäste einen Gruß und bis zu fünf Fotos. Beides
+erscheint sofort auf der Seite.
+
+### Einmalig: Admin-Passwort vergeben
+
+Ohne diesen Schritt kannst du keine Beiträge ausblenden.
+
+1. Im ALL-INKL-Dateimanager (KAS) oder per FTP in den Ordner **`daten/`**
+   wechseln. *(Existiert er noch nicht, einfach die Website einmal aufrufen –
+   dann legt er sich selbst an.)*
+2. Dort eine **leere Datei** namens `SETUP-ERLAUBT` anlegen, ohne Endung.
+3. Im Browser `https://DEINE-ADRESSE/api/setup.php` aufrufen.
+4. Passwort vergeben – mindestens 10 Zeichen. **Gut notieren, es lässt sich
+   nicht auslesen.**
+
+Die Datei `SETUP-ERLAUBT` verschwindet danach automatisch.
+
+> **Warum so umständlich?** Die Setup-Seite liegt öffentlich im Netz. Ohne
+> diesen Nachweis könnte der Erste, der die Adresse errät, das Passwort setzen.
+> Die Datei anlegen kann nur, wer Zugriff auf den Webspace hat.
+
+Passwort vergessen? Schritte 1 bis 4 einfach wiederholen.
+
+### Beiträge ausblenden oder löschen
+
+`https://DEINE-ADRESSE/admin.html` aufrufen und anmelden.
+
+| Knopf | Wirkung |
+| --- | --- |
+| **Archivieren** | Beitrag verschwindet von der Website, bleibt aber gespeichert |
+| **Wieder anzeigen** | macht das Archivieren rückgängig |
+| **Endgültig löschen** | Beitrag und Fotos werden unwiderruflich entfernt |
+
+Im Zweifel lieber archivieren als löschen – archivierte Beiträge lassen sich
+jederzeit zurückholen.
+
+### Zwei Einstellungen zum Umschalten
+
+In der Datei **`daten/config.php`** auf dem Webspace (per FTP oder KAS
+bearbeiten). Diese Datei wird von keinem Deployment überschrieben.
+
+```php
+return [
+  'admin_hash'    => '…',      // nicht anfassen
+  'vorabfreigabe' => false,
+  'zugangscode'   => '',
+];
+```
+
+**Beiträge erst nach Freigabe zeigen:**
+`'vorabfreigabe' => true`
+Beiträge landen dann im Admin unter „Wartet" und erscheinen erst, wenn du sie
+freigibst. Sicherer – aber du musst während der Feier mitlesen, sonst bleibt
+die Wand leer.
+
+**Nur Gäste mit Code zulassen:**
+`'zugangscode' => 'BRITTA25'`
+Gäste geben den Code einmal ein. Das Feld erscheint automatisch. Sinnvoll, weil
+die Seite öffentlich erreichbar ist – ohne Code kann theoretisch jeder
+hochladen, der die Adresse kennt.
+
+### Was passiert mit hochgeladenen Bildern?
+
+Jedes Bild wird auf dem Server **neu berechnet** und als frisches JPEG
+gespeichert. Das hat zwei Gründe:
+
+1. **Sicherheit.** Eine Datei, die sich als Bild ausgibt, aber Schadcode
+   enthält, überlebt das Neuberechnen nicht – übrig bleiben nur Pixel.
+2. **Ladezeit.** Aus einem 8-MB-Handyfoto wird ein paar hundert Kilobyte,
+   dazu eine kleine Vorschau für die Übersicht.
+
+Die Originaldateien werden nicht aufbewahrt. Wer die Fotos in voller Auflösung
+haben möchte, sollte die Gäste zusätzlich darum bitten.
+
+### Sicherungskopie
+
+Die Beiträge liegen **nur auf dem Webspace**, nicht im Repository. Vor
+größeren Änderungen lohnt es sich, diese beiden Ordner per FTP
+herunterzuladen:
+
+- `daten/` – die Beiträge und die Konfiguration
+- `uploads/` – die Fotos

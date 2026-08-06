@@ -1,13 +1,26 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
-import type { GalerieBild } from '../data/content'
-import { asset } from '../lib/assets'
 import { useModalVerhalten } from '../hooks/useModalVerhalten'
 import { useBewegungReduziert } from '../hooks/useBewegungReduziert'
 
+/**
+ * Ein Bild in der Grossansicht.
+ *
+ * `quelle` ist die fertige URL – die Umrechnung auf den Basispfad
+ * passiert bereits beim Aufrufer. Dadurch funktioniert die Lightbox
+ * sowohl mit mitgelieferten als auch mit hochgeladenen Bildern.
+ */
+export interface LightboxBild {
+  id: string
+  quelle: string
+  alt: string
+  unterschrift?: string
+  jahr?: string
+}
+
 interface ImageLightboxProps {
-  bilder: GalerieBild[]
+  bilder: LightboxBild[]
   /** Index des angezeigten Bildes; null = geschlossen. */
   index: number | null
   beiSchliessen: () => void
@@ -149,7 +162,7 @@ export function ImageLightbox({
                   </div>
                 ) : (
                   <img
-                    src={asset(aktuell.quelle)}
+                    src={aktuell.quelle}
                     alt={aktuell.alt}
                     onError={() => merkeFehler(aktuell.id)}
                     className="max-h-[70svh] w-auto max-w-full rounded-sm object-contain shadow-2xl"

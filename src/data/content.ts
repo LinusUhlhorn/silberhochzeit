@@ -105,26 +105,6 @@ export interface StatistikInhalt {
   eintraege: Statistik[]
 }
 
-export interface GalerieBild extends Entwurfsfaehig {
-  id: string
-  quelle: string
-  alt: string
-  /** Optionale Bildunterschrift. Leer lassen = keine Unterschrift. */
-  unterschrift?: string
-  jahr?: string
-  /** Bestimmt die Kachelgroesse im Galerie-Raster. */
-  format: 'hoch' | 'quer' | 'quadrat'
-}
-
-export interface GalerieInhalt {
-  nummer: string
-  eyebrow: string
-  ueberschrift: string
-  einleitung: string
-  hinweisLeer: string
-  bilder: GalerieBild[]
-}
-
 export interface DamalsHeuteInhalt {
   nummer: string
   eyebrow: string
@@ -194,58 +174,59 @@ export interface QuizInhalt {
   ergebnisse: QuizErgebnis[]
 }
 
-export interface Gruss extends Entwurfsfaehig {
+/** Ein Bild, das ein Gast hochgeladen hat. Kommt vom Server. */
+export interface GastBild {
+  /** Dateiname des grossen Bildes in uploads/bilder/ */
+  name: string
+  /** Dateiname der Vorschau */
+  vorschau: string
+  breite: number
+  hoehe: number
+}
+
+/** Ein Gästebeitrag. Kommt vom Server, steht nicht in dieser Datei. */
+export interface GastBeitrag {
   id: string
+  name: string
   text: string
-  absender: string
-  /** Optionaler Zusatz, z. B. „aus Bremen“ oder „Nachbarn“. */
-  zusatz?: string
+  bilder: GastBild[]
+  /** Unix-Zeit in Sekunden */
+  zeit: number
 }
 
-export interface GruesseInhalt {
-  nummer: string
-  eyebrow: string
-  ueberschrift: string
-  einleitung: string
-  eintraege: Gruss[]
-}
-
-export interface FeierDetail extends Entwurfsfaehig {
-  id: string
-  /** Name eines Lucide-Icons, siehe iconMap in EventInfoSection.tsx */
-  icon: 'kalender' | 'uhr' | 'ort' | 'auto' | 'kleidung' | 'kontakt' | 'geschenk'
-  label: string
-  /** Mehrere Zeilen werden untereinander dargestellt. */
-  zeilen: string[]
-}
-
-export interface FeierInhalt {
-  nummer: string
-  eyebrow: string
-  ueberschrift: string
-  einleitung: string
-  details: FeierDetail[]
-  karte: {
-    label: string
-    /** Google-Maps-Link. Leer lassen = Button wird ausgeblendet. */
-    url: string
-    hinweisOhneLink: string
-  }
-  rueckmeldung: {
-    text: string
-    entwurf?: boolean
-  }
-}
-
-export interface FotowandInhalt {
+export interface GaestewandInhalt {
   nummer: string
   eyebrow: string
   ueberschrift: string
   einleitung: string[]
-  buttonLabel: string
-  /** Upload-Link. Leer lassen, solange kein Link existiert. */
-  uploadUrl: string
-  hinweisOhneLink: string
+  /** Beschriftungen des Formulars */
+  formular: {
+    titel: string
+    nameLabel: string
+    namePlatzhalter: string
+    textLabel: string
+    textPlatzhalter: string
+    bilderLabel: string
+    bilderHinweis: string
+    codeLabel: string
+    codePlatzhalter: string
+    absendenLabel: string
+    sendetLabel: string
+    dankeTitel: string
+    dankeText: string
+    dankeWartetText: string
+    nochEinerLabel: string
+  }
+  /** Beschriftungen der Beitragsliste */
+  liste: {
+    titel: string
+    ladeText: string
+    leerTitel: string
+    leerText: string
+    fehlerText: string
+    erneutLabel: string
+    bildOeffnen: string
+  }
   qrCodeBild: string
   qrCodeAlt: string
   qrHinweis: string
@@ -294,13 +275,10 @@ export interface SeitenInhalt {
   begruessung: BegruessungInhalt
   timeline: TimelineInhalt
   statistik: StatistikInhalt
-  galerie: GalerieInhalt
   damalsHeute: DamalsHeuteInhalt
   fakten: FaktenInhalt
   quiz: QuizInhalt
-  gruesse: GruesseInhalt
-  feier: FeierInhalt
-  fotowand: FotowandInhalt
+  gaestewand: GaestewandInhalt
   abschluss: AbschlussInhalt
   footer: FooterInhalt
 }
@@ -327,11 +305,9 @@ export const inhalt: SeitenInhalt = {
      ------------------------------------------------------------------ */
   navigation: [
     { label: 'Geschichte', anker: 'geschichte' },
-    { label: 'Galerie', anker: 'galerie' },
     { label: 'Damals & heute', anker: 'damals-heute' },
     { label: 'Quiz', anker: 'quiz' },
-    { label: 'Grüße', anker: 'gruesse' },
-    { label: 'Feier', anker: 'feier' },
+    { label: 'Gästewand', anker: 'gaestewand' },
   ],
 
   navigationLabels: {
@@ -503,130 +479,6 @@ export const inhalt: SeitenInhalt = {
     ],
   },
 
-  /* ------------------------------------------------------------------
-     05 · GALERIE
-     Bilder gehoeren in den Ordner public/images/.
-     Fehlt eine Datei, zeigt die Seite automatisch eine gestaltete
-     Platzhalterflaeche statt eines kaputten Bildes.
-     ------------------------------------------------------------------ */
-  galerie: {
-    nummer: '04',
-    eyebrow: 'Bilder',
-    ueberschrift: 'Fünfundzwanzig Jahre in Bildern',
-    einleitung:
-      'Ein paar Momente aus einem Vierteljahrhundert. Nicht chronologisch, nicht vollständig — aber ziemlich ehrlich.',
-    hinweisLeer: 'Foto folgt',
-    bilder: [
-      {
-        id: 'g01',
-        quelle: 'images/gallery-01.jpg',
-        alt: 'Britta und Lutz am Hochzeitstag',
-        unterschrift: 'Der Tag, an dem alles offiziell wurde.',
-        jahr: '2001',
-        format: 'hoch',
-        entwurf: true,
-      },
-      {
-        id: 'g02',
-        quelle: 'images/gallery-02.jpg',
-        alt: 'Die erste gemeinsame Wohnung',
-        unterschrift: 'Klein, aber voller Pläne.',
-        jahr: '2002',
-        format: 'quer',
-        entwurf: true,
-      },
-      {
-        id: 'g03',
-        quelle: 'images/gallery-03.jpg',
-        alt: 'Familienfoto im Garten',
-        unterschrift: 'Sonntagnachmittag im Garten.',
-        jahr: '2005',
-        format: 'quadrat',
-        entwurf: true,
-      },
-      {
-        id: 'g04',
-        quelle: 'images/gallery-04.jpg',
-        alt: 'Gemeinsamer Urlaub am Meer',
-        unterschrift: 'Wind, Sand und viel zu wenig Sonnencreme.',
-        jahr: '2008',
-        format: 'quer',
-        entwurf: true,
-      },
-      {
-        id: 'g05',
-        quelle: 'images/gallery-05.jpg',
-        alt: 'Britta und Lutz auf einer Familienfeier',
-        unterschrift: 'Immer die Letzten auf der Tanzfläche.',
-        jahr: '2010',
-        format: 'hoch',
-        entwurf: true,
-      },
-      {
-        id: 'g06',
-        quelle: 'images/gallery-06.jpg',
-        alt: 'Weihnachten im Kreis der Familie',
-        unterschrift: 'Weihnachten, wie es sein soll: laut.',
-        jahr: '2012',
-        format: 'quadrat',
-        entwurf: true,
-      },
-      {
-        id: 'g07',
-        quelle: 'images/gallery-07.jpg',
-        alt: 'Ausflug mit dem Fahrrad',
-        unterschrift: 'Der Umweg war Absicht. Angeblich.',
-        jahr: '2014',
-        format: 'quer',
-        entwurf: true,
-      },
-      {
-        id: 'g08',
-        quelle: 'images/gallery-08.jpg',
-        alt: 'Britta und Lutz im Wohnzimmer',
-        unterschrift: 'Feierabend.',
-        jahr: '2016',
-        format: 'hoch',
-        entwurf: true,
-      },
-      {
-        id: 'g09',
-        quelle: 'images/gallery-09.jpg',
-        alt: 'Gemeinsames Essen mit Freunden',
-        unterschrift: 'Es war eigentlich nur ein Kaffee geplant.',
-        jahr: '2018',
-        format: 'quadrat',
-        entwurf: true,
-      },
-      {
-        id: 'g10',
-        quelle: 'images/gallery-10.jpg',
-        alt: 'Spaziergang im Herbst',
-        unterschrift: 'Zwischen Feldern, wie fast immer.',
-        jahr: '2021',
-        format: 'quer',
-        entwurf: true,
-      },
-      {
-        id: 'g11',
-        quelle: 'images/gallery-11.jpg',
-        alt: 'Britta und Lutz bei einem runden Geburtstag',
-        unterschrift: 'Ein runder Geburtstag, gebührend begangen.',
-        jahr: '2023',
-        format: 'hoch',
-        entwurf: true,
-      },
-      {
-        id: 'g12',
-        quelle: 'images/gallery-12.jpg',
-        alt: 'Aktuelles Foto von Britta und Lutz',
-        unterschrift: 'Und heute.',
-        jahr: '2025',
-        format: 'quer',
-        entwurf: true,
-      },
-    ],
-  },
 
   /* ------------------------------------------------------------------
      06 · DAMALS & HEUTE
@@ -634,7 +486,7 @@ export const inhalt: SeitenInhalt = {
      Bildausschnitt und moeglichst das gleiche Seitenverhaeltnis haben.
      ------------------------------------------------------------------ */
   damalsHeute: {
-    nummer: '05',
+    nummer: '04',
     eyebrow: 'Damals & heute',
     ueberschrift: 'Zwei Bilder, fünfundzwanzig Jahre',
     begleittext: [
@@ -664,7 +516,7 @@ export const inhalt: SeitenInhalt = {
      Britta und Lutz durchgehen.
      ------------------------------------------------------------------ */
   fakten: {
-    nummer: '06',
+    nummer: '05',
     eyebrow: '25 Dinge',
     ueberschrift: '25 Dinge über Britta & Lutz',
     einleitung:
@@ -847,7 +699,7 @@ export const inhalt: SeitenInhalt = {
      Pro Frage muss genau EINE Antwort `richtig: true` haben.
      ------------------------------------------------------------------ */
   quiz: {
-    nummer: '07',
+    nummer: '06',
     eyebrow: 'Gästequiz',
     ueberschrift: 'Wie gut kennt ihr die beiden?',
     einleitung:
@@ -993,174 +845,51 @@ export const inhalt: SeitenInhalt = {
     ],
   },
 
-  /* ------------------------------------------------------------------
-     09 · GRÜSSE
-     ACHTUNG: Alle Grueße sind Beispieltexte mit erfundenen Absendern!
-     Bitte vor der Veroeffentlichung durch echte Grueße ersetzen oder
-     den gesamten Abschnitt entfernen. Niemand sollte einen Gruß
-     zugeschrieben bekommen, den er nicht geschrieben hat.
-     ------------------------------------------------------------------ */
-  gruesse: {
-    nummer: '08',
-    eyebrow: 'Grüße',
-    ueberschrift: 'Was andere sagen',
-    einleitung:
-      'Ein paar Zeilen von Menschen, die die beiden schon eine Weile begleiten.',
-    eintraege: [
-      {
-        id: 'm01',
-        text: 'Fünfundzwanzig Jahre — und ihr schafft es immer noch, euch gegenseitig zum Lachen zu bringen. Genau so soll das sein. Wir freuen uns auf euer Fest und auf alles, was danach noch kommt.',
-        absender: '[Name eintragen]',
-        zusatz: 'Familie',
-        entwurf: true,
-      },
-      {
-        id: 'm02',
-        text: 'Ihr habt uns immer das Gefühl gegeben, jederzeit vorbeikommen zu können. Das ist mehr wert, als ihr wahrscheinlich ahnt. Danke für ein Vierteljahrhundert offene Tür.',
-        absender: '[Name eintragen]',
-        zusatz: 'Nachbarn',
-        entwurf: true,
-      },
-      {
-        id: 'm03',
-        text: 'Wir haben ausgerechnet, dass ihr in fünfundzwanzig Jahren ungefähr dreitausend Mal darüber diskutiert habt, wer den Müll rausbringt. Und dass ihr trotzdem noch zusammen seid. Respekt.',
-        absender: '[Name eintragen]',
-        entwurf: true,
-      },
-      {
-        id: 'm04',
-        text: 'Bei euch habe ich gelernt, wie das eigentlich geht: zusammenbleiben. Nicht, weil es immer leicht war, sondern weil ihr euch entschieden habt, es leicht zu machen, wo es ging. Danke dafür.',
-        absender: '[Name eintragen]',
-        entwurf: true,
-      },
-      {
-        id: 'm05',
-        text: 'Auf die nächsten fünfundzwanzig. Wir bringen den Nachtisch mit.',
-        absender: '[Name eintragen]',
-        entwurf: true,
-      },
-      {
-        id: 'm06',
-        text: 'Ihr beide seid der Beweis dafür, dass die schönsten Geschichten selten spektakulär beginnen. Herzlichen Glückwunsch zur Silberhochzeit — von ganzem Herzen.',
-        absender: '[Name eintragen]',
-        zusatz: 'aus alter Verbundenheit',
-        entwurf: true,
-      },
-    ],
-  },
+
 
   /* ------------------------------------------------------------------
-     10 · FEIER
-     ACHTUNG: Alle Angaben sind Platzhalter!
+     08 · GÄSTEWAND
+     Grüße und Fotos der Gäste. Die Beiträge selbst stehen NICHT hier –
+     sie kommen vom Server (api/entries.php). Hier stehen nur die
+     Beschriftungen rundherum.
      ------------------------------------------------------------------ */
-  feier: {
-    nummer: '09',
-    eyebrow: 'Die Feier',
-    ueberschrift: 'Alles Wichtige auf einen Blick',
-    einleitung:
-      'Damit am Tag selbst niemand suchen muss: Hier stehen Zeit, Ort und alles, was sonst noch gut zu wissen ist.',
-    details: [
-      {
-        id: 'datum',
-        icon: 'kalender',
-        label: 'Datum',
-        zeilen: ['[Datum eintragen]', 'z. B. Samstag, 12. September 2026'],
-        entwurf: true,
-      },
-      {
-        id: 'uhrzeit',
-        icon: 'uhr',
-        label: 'Uhrzeit',
-        zeilen: [
-          '[Uhrzeit eintragen]',
-          'Empfang ab [Uhrzeit], Essen ab [Uhrzeit]',
-        ],
-        entwurf: true,
-      },
-      {
-        id: 'ort',
-        icon: 'ort',
-        label: 'Wo',
-        zeilen: [
-          '[Name der Location]',
-          '[Straße und Hausnummer]',
-          '[PLZ] Drentwede',
-        ],
-        entwurf: true,
-      },
-      {
-        id: 'parken',
-        icon: 'auto',
-        label: 'Parken',
-        zeilen: [
-          '[Parkmöglichkeiten eintragen]',
-          'z. B. Parkplätze direkt am Haus, weitere entlang der Straße.',
-        ],
-        entwurf: true,
-      },
-      {
-        id: 'dresscode',
-        icon: 'kleidung',
-        label: 'Dresscode',
-        zeilen: [
-          '[Dresscode eintragen]',
-          'z. B. festlich, aber bequem – getanzt wird auf jeden Fall.',
-        ],
-        entwurf: true,
-      },
-      {
-        id: 'kontakt',
-        icon: 'kontakt',
-        label: 'Fragen & Rückmeldungen',
-        zeilen: ['[Ansprechpartner eintragen]', '[Telefonnummer oder E-Mail]'],
-        entwurf: true,
-      },
-      {
-        id: 'geschenke',
-        icon: 'geschenk',
-        label: 'Zum Thema Geschenke',
-        zeilen: [
-          'Das größte Geschenk ist, dass ihr da seid.',
-          '[Optionaler Hinweis der Familie – bitte selbst formulieren.]',
-        ],
-        entwurf: true,
-      },
-    ],
-    karte: {
-      label: 'In Google Maps öffnen',
-      // Sobald die Adresse feststeht: Ort in Google Maps suchen,
-      // "Teilen" -> "Link kopieren" und den Link hier einsetzen.
-      url: '',
-      hinweisOhneLink:
-        'Der Kartenlink wird ergänzt, sobald der Veranstaltungsort feststeht.',
-    },
-    rueckmeldung: {
-      text: 'Bitte gebt uns bis zum [Datum eintragen] Bescheid, ob ihr dabei seid — telefonisch, per Nachricht oder beim nächsten Treffen.',
-      entwurf: true,
-    },
-  },
-
-  /* ------------------------------------------------------------------
-     11 · DIGITALE FOTOWAND
-     Solange `uploadUrl` leer ist, wird der Button deaktiviert und
-     stattdessen ein freundlicher Hinweis angezeigt.
-     ------------------------------------------------------------------ */
-  fotowand: {
-    nummer: '10',
-    eyebrow: 'Digitale Fotowand',
-    ueberschrift: 'Eure Bilder gehören dazu',
+  gaestewand: {
+    nummer: '07',
+    eyebrow: 'Gästewand',
+    ueberschrift: 'Schreibt uns etwas',
     einleitung: [
-      'Am Ende eines solchen Abends gibt es immer die eine Aufnahme, die alles erzählt — und sie liegt auf irgendeinem Handy und wird nie wieder angeschaut.',
-      'Damit das diesmal nicht passiert, sammeln wir alle Fotos an einem Ort. Einfach den Code scannen oder auf den Button tippen, Bilder auswählen, fertig. Kein Konto, keine Anmeldung.',
+      'Ein Gruß, eine Erinnerung, ein Foto vom Abend — alles ist willkommen und erscheint gleich hier auf der Seite.',
+      'Kein Konto, keine Anmeldung. Name eintragen, etwas schreiben, Fotos auswählen, fertig.',
     ],
-    buttonLabel: 'Fotos hochladen',
-    // Hier den Link zum Cloud-Ordner eintragen (z. B. Nextcloud,
-    // Google Drive, Dropbox). Solange das Feld leer ist, erscheint
-    // automatisch der Hinweistext unten.
-    uploadUrl: '',
-    hinweisOhneLink: 'Der Foto-Upload wird zur Feier freigeschaltet.',
-    qrCodeBild: 'images/qr-fotowand.png',
-    qrCodeAlt: 'QR-Code zum Hochladen der Fotos',
+    formular: {
+      titel: 'Beitrag hinzufügen',
+      nameLabel: 'Dein Name',
+      namePlatzhalter: 'z. B. Familie Meier',
+      textLabel: 'Dein Gruß',
+      textPlatzhalter: 'Was möchtest du Britta und Lutz sagen?',
+      bilderLabel: 'Fotos',
+      bilderHinweis: 'Bis zu 5 Bilder, je höchstens 12 MB (JPG, PNG oder WebP).',
+      codeLabel: 'Zugangscode',
+      codePlatzhalter: 'Code aus der Einladung',
+      absendenLabel: 'Beitrag senden',
+      sendetLabel: 'Wird gesendet …',
+      dankeTitel: 'Vielen Dank!',
+      dankeText: 'Dein Beitrag steht jetzt auf der Gästewand.',
+      dankeWartetText:
+        'Dein Beitrag ist angekommen und erscheint, sobald er freigegeben wurde.',
+      nochEinerLabel: 'Noch einen Beitrag schreiben',
+    },
+    liste: {
+      titel: 'Was die Gäste schreiben',
+      ladeText: 'Beiträge werden geladen …',
+      leerTitel: 'Noch ist es hier leer',
+      leerText: 'Sei die erste Person, die etwas hinterlässt.',
+      fehlerText: 'Die Beiträge konnten nicht geladen werden.',
+      erneutLabel: 'Erneut versuchen',
+      bildOeffnen: 'Bild vergrößern',
+    },
+    qrCodeBild: 'images/qr-gaestewand.png',
+    qrCodeAlt: 'QR-Code zur Gästewand',
     qrHinweis: 'Mit der Handykamera scannen',
   },
 
@@ -1168,7 +897,7 @@ export const inhalt: SeitenInhalt = {
      12 · ABSCHLUSS
      ------------------------------------------------------------------ */
   abschluss: {
-    nummer: '11',
+    nummer: '08',
     eyebrow: 'Zum Schluss',
     ueberschrift: 'Auf die nächsten Jahre',
     absaetze: [
@@ -1202,13 +931,10 @@ export const sektionsAnker = [
   'begruessung',
   'geschichte',
   'zahlen',
-  'galerie',
   'damals-heute',
   'fakten',
   'quiz',
-  'gruesse',
-  'feier',
-  'fotowand',
+  'gaestewand',
   'abschluss',
 ] as const
 

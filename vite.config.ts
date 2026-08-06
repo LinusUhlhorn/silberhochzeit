@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -37,6 +38,15 @@ export default defineConfig(({ mode }) => {
       // und laesst sich bei einer One-Page-Site nicht sinnvoll aufteilen.
       chunkSizeWarningLimit: 700,
       rollupOptions: {
+        // Zwei eigenstaendige Seiten:
+        //   index.html  – die Website fuer die Gaeste
+        //   admin.html  – die Verwaltung der Gaestewand
+        // Bewusst kein clientseitiges Routing: So braucht der Webspace
+        // keine Umschreiberegeln, und /admin.html ist eine echte Datei.
+        input: {
+          index: resolve(import.meta.dirname, 'index.html'),
+          admin: resolve(import.meta.dirname, 'admin.html'),
+        },
         output: {
           // Bibliotheken in eigene Dateien auslagern: aendert sich spaeter
           // nur ein Text, muessen Besucher nicht alles neu laden.

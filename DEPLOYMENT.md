@@ -165,6 +165,35 @@ stehen fest im Workflow und brauchen keine Secrets.
 > Zeilenumbruch am Ende eines Secrets führt zu einem Login-Fehler, der wie ein
 > falsches Passwort aussieht. Im Zweifel das Secret löschen und neu anlegen.
 
+### Der häufigste Fehler: falscher Reiter
+
+Unter *Settings → Secrets and variables → Actions* gibt es **zwei Reiter**:
+
+| Reiter | Zugriff im Workflow | Wofür |
+| --- | --- | --- |
+| **Secrets** | `${{ secrets.NAME }}` | Passwörter, Zugangsdaten – Werte sind nicht mehr lesbar |
+| **Variables** | `${{ vars.NAME }}` | unkritische Einstellungen – Werte bleiben im Klartext sichtbar |
+
+Werden die Zugangsdaten versehentlich im Reiter **Variables** angelegt, bleibt
+`secrets.FTP_SERVER` leer. Die FTP-Action meldet dann nur:
+
+```
+Error: Input required and not supplied: server
+```
+
+Das klingt nach einem Fehler im Workflow, ist aber ein Hinweis darauf, dass die
+Secrets nicht ankommen. Weitere mögliche Ursachen:
+
+- Die Werte wurden als **Environment secrets** statt als **Repository secrets**
+  angelegt. Environment-Secrets sind nur erreichbar, wenn der Job zusätzlich
+  ein `environment:` deklariert.
+- Im Namen steht ein Leerzeichen (`FTP_SERVER ` statt `FTP_SERVER`).
+- Die Secrets liegen in einem anderen Repository.
+
+Der Workflow prüft das inzwischen im Schritt **„Zugangsdaten prüfen"** und nennt
+beim Fehlschlag genau, welches der drei Secrets leer ankommt. Werte werden dabei
+nie ausgegeben.
+
 ### Warum das Zielverzeichnis `/` ist
 
 Bei ALL-INKL wird ein FTP-Benutzer beim Anlegen auf ein Verzeichnis
@@ -267,6 +296,8 @@ ist bereits aufgeklappt.
 | TLS-/Zertifikatsfehler | Server spricht kein modernes TLS | `protocol: ftps` einmalig auf `ftps-legacy` ändern |
 | `npm ci` schlägt fehl | `package-lock.json` fehlt oder passt nicht | `npm install` lokal ausführen, Lockfile committen |
 | Build bricht bei `tsc -b` ab | Tippfehler in `content.ts` | Fehlermeldung nennt Datei und Zeile |
+| `api/entries.php` zeigt Quelltext | PHP wird nicht ausgeführt | beim Hoster nachfragen |
+| Upload meldet Serverfehler | Webverzeichnis nicht beschreibbar | Schreibrechte auf `daten/` und `uploads/` prüfen |
 | Seite bleibt weiß, 404 bei `/assets/…` | falsche Basis-URL | Schritt 7 – bei Betrieb direkt unter der Domain muss `VITE_BASE_PATH` **ungesetzt** bleiben |
 
 Die Timeout-Zeit bei FTP kann bei sehr langsamen Servern zu knapp sein. Dann
@@ -291,6 +322,54 @@ im Workflow beim FTP-Schritt `timeout: 60000` ergänzen.
 
 Bleibt die Seite weiß: Browser-Konsole öffnen (`F12`). 404-Fehler bei
 `/assets/…` deuten fast immer auf eine falsche Basis-URL hin (Schritt 7).
+
+---
+
+## Schritt 9b – Gästewand einrichten (einmalig)
+
+Die Gästewand braucht PHP. Bei ALL-INKL ist das in jedem Paket enthalten,
+es muss nichts freigeschaltet werden.
+
+**Nach dem ersten erfolgreichen Deployment:**
+
+1. Im KAS-Dateimanager (oder per FTP) im Ordner `daten/` eine leere Datei
+   namens **`SETUP-ERLAUBT`** anlegen – ohne Dateiendung.
+   *Den Ordner `daten/` legt PHP beim ersten Seitenaufruf selbst an. Ist er
+   noch nicht da, einfach die Website einmal aufrufen.*
+2. `https://DEINE-ADRESSE/api/setup.php` aufrufen.
+3. Admin-Passwort vergeben (mindestens 10 Zeichen).
+4. Die Markerdatei wird automatisch gelöscht.
+
+Danach ist die Verwaltung unter `https://DEINE-ADRESSE/admin.html` erreichbar.
+
+### Was das Deployment NICHT anfasst
+
+Diese beiden Ordner entstehen erst auf dem Server und werden von keinem
+Deployment überschrieben oder gelöscht:
+
+| Ordner | Inhalt |
+| --- | --- |
+| `daten/` | Beiträge, `config.php` mit dem Passwort-Hash, Sperrlisten |
+| `uploads/bilder/` | die Fotos der Gäste |
+
+Der Workflow löscht auf dem Server grundsätzlich nichts – hochgeladene
+Beiträge und Fotos überstehen jedes Deployment.
+
+> **Sicherungskopie:** Vor größeren Änderungen lohnt es sich, diese beiden
+> Ordner per FTP herunterzuladen. Sie enthalten alles, was die Gäste
+> beigetragen haben, und liegen nirgends sonst.
+
+### Prüfen, ob PHP läuft
+
+`https://DEINE-ADRESSE/api/entries.php` aufrufen. Erwartet wird eine Zeile wie:
+
+```json
+{"ok":true,"anzahl":0,"eintraege":[]}
+```
+
+Erscheint stattdessen der PHP-Quelltext, wird PHP nicht ausgeführt – dann
+beim ALL-INKL-Support nachfragen. Erscheint ein 500er, fehlen meist die
+Schreibrechte im Webverzeichnis.
 
 ---
 
