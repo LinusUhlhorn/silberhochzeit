@@ -351,11 +351,12 @@ export const inhalt: SeitenInhalt = {
     ctaZiel: 'begruessung',
     bild: 'images/hero.jpg',
     bildAlt: 'Britta und Lutz Barmbold',
-    // Standard ist die Bildmitte. Bei einem HOCHKANT-Foto werden damit auf
-    // dem Desktop die Koepfe angeschnitten – dann auf '50% 30%' setzen.
-    // (Nachgemessen an einem 2:3-Foto: bei '50% 50%' liegen die Koepfe
-    //  genau auf der Oberkante, bei '50% 30%' sitzen sie frei.)
-    bildPosition: '50% 50%',
+    // Das Foto ist hochkant und wird im breiten Titelbereich oben und unten
+    // beschnitten. Nachgemessen: bei '50% 50%' liegen die Koepfe auf der
+    // Oberkante, bei '50% 36%' stehen beide Gesichter frei ueber der
+    // Ueberschrift. Auf dem Smartphone hat der Wert keine Wirkung, dort wird
+    // seitlich statt oben/unten beschnitten.
+    bildPosition: '50% 36%',
   },
 
   /* ------------------------------------------------------------------
@@ -529,7 +530,8 @@ export const inhalt: SeitenInhalt = {
       jahr: '2026',
       bild: 'images/heute.jpg',
       alt: 'Britta und Lutz heute',
-      bildPosition: '50% 50%',
+      // Rechnerisch so gesetzt, dass die ganze Figur in den 4:3-Rahmen passt.
+      bildPosition: '50% 57%',
     },
     bedienhinweis:
       'Regler ziehen oder mit den Pfeiltasten bewegen, um zwischen damals und heute zu wechseln.',
