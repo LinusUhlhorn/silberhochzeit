@@ -49,6 +49,21 @@ export interface HeroInhalt {
   ctaZiel: string
   bild: string
   bildAlt: string
+  /**
+   * Bildfokus – welcher Teil des Fotos beim Zuschneiden sichtbar bleibt.
+   *
+   * Der Titelbereich ist breiter als hoch. Bei einem HOCHKANT-Foto wird
+   * deshalb oben und unten viel abgeschnitten. Mit diesem Wert laesst sich
+   * steuern, welcher Ausschnitt erhalten bleibt.
+   *
+   *   '50% 50%'  Mitte (Standard)
+   *   '50% 30%'  weiter oben – gut, wenn Koepfe abgeschnitten werden
+   *   '50% 20%'  noch weiter oben
+   *
+   * Am besten passt ein QUERFORMAT-Foto, bei dem das untere Drittel frei
+   * ist – dort liegen Text und Farbverlauf.
+   */
+  bildPosition?: string
 }
 
 export interface BegruessungInhalt {
@@ -115,12 +130,16 @@ export interface DamalsHeuteInhalt {
     jahr: string
     bild: string
     alt: string
+    /** Bildfokus, siehe HeroInhalt.bildPosition. */
+    bildPosition?: string
   }
   heute: {
     label: string
     jahr: string
     bild: string
     alt: string
+    /** Bildfokus, siehe HeroInhalt.bildPosition. */
+    bildPosition?: string
   }
   bedienhinweis: string
 }
@@ -332,6 +351,11 @@ export const inhalt: SeitenInhalt = {
     ctaZiel: 'begruessung',
     bild: 'images/hero.jpg',
     bildAlt: 'Britta und Lutz Barmbold',
+    // Standard ist die Bildmitte. Bei einem HOCHKANT-Foto werden damit auf
+    // dem Desktop die Koepfe angeschnitten – dann auf '50% 30%' setzen.
+    // (Nachgemessen an einem 2:3-Foto: bei '50% 50%' liegen die Koepfe
+    //  genau auf der Oberkante, bei '50% 30%' sitzen sie frei.)
+    bildPosition: '50% 50%',
   },
 
   /* ------------------------------------------------------------------
@@ -498,12 +522,14 @@ export const inhalt: SeitenInhalt = {
       jahr: '2001',
       bild: 'images/damals.jpg',
       alt: 'Britta und Lutz um das Jahr 2001',
+      bildPosition: '50% 50%',
     },
     heute: {
       label: 'Heute',
       jahr: '2026',
       bild: 'images/heute.jpg',
       alt: 'Britta und Lutz heute',
+      bildPosition: '50% 50%',
     },
     bedienhinweis:
       'Regler ziehen oder mit den Pfeiltasten bewegen, um zwischen damals und heute zu wechseln.',
