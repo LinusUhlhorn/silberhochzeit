@@ -225,6 +225,39 @@ vor dem Einpflegen der Fotos in Ruhe ansehen.
 an. Der Effekt entsteht durch die Gegenüberstellung, nicht durch die Bilder
 selbst.
 
+### Hoch- oder Querformat?
+
+| Stelle | Passendes Format | Warum |
+| --- | --- | --- |
+| `hero.jpg` | **quer**, unteres Drittel ruhig | Dort liegen Überschrift und Farbverlauf |
+| `damals.jpg` / `heute.jpg` | egal, aber **beide gleich** | Der Vergleich lebt vom gleichen Ausschnitt |
+
+Ein Hochformat-Foto im Titelbereich wird oben und unten stark beschnitten –
+bei einem 2:3-Foto auf dem Desktop je etwa 600 Pixel. Ohne Korrektur landen
+die Köpfe genau auf der Oberkante, halb unter der Navigation.
+
+**Dafür gibt es den Bildfokus.** In `content.ts`:
+
+```ts
+hero: {
+  bild: 'images/hero.jpg',
+  bildPosition: '50% 30%',   // ← 30 statt 50 holt den Ausschnitt nach oben
+}
+```
+
+Der zweite Wert bestimmt, welcher Teil des Fotos erhalten bleibt:
+`50%` = Mitte, kleinere Werte = weiter oben, größere = weiter unten.
+Einfach ausprobieren, `npm run dev` zeigt es sofort.
+
+Dasselbe gibt es bei `damals` und `heute`:
+
+```ts
+heute: {
+  bild: 'images/heute.jpg',
+  bildPosition: '50% 40%',
+},
+```
+
 ---
 
 ## 6. Nach dem Ändern

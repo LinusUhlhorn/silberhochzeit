@@ -49,6 +49,21 @@ export interface HeroInhalt {
   ctaZiel: string
   bild: string
   bildAlt: string
+  /**
+   * Bildfokus – welcher Teil des Fotos beim Zuschneiden sichtbar bleibt.
+   *
+   * Der Titelbereich ist breiter als hoch. Bei einem HOCHKANT-Foto wird
+   * deshalb oben und unten viel abgeschnitten. Mit diesem Wert laesst sich
+   * steuern, welcher Ausschnitt erhalten bleibt.
+   *
+   *   '50% 50%'  Mitte (Standard)
+   *   '50% 30%'  weiter oben – gut, wenn Koepfe abgeschnitten werden
+   *   '50% 20%'  noch weiter oben
+   *
+   * Am besten passt ein QUERFORMAT-Foto, bei dem das untere Drittel frei
+   * ist – dort liegen Text und Farbverlauf.
+   */
+  bildPosition?: string
 }
 
 export interface BegruessungInhalt {
@@ -115,12 +130,16 @@ export interface DamalsHeuteInhalt {
     jahr: string
     bild: string
     alt: string
+    /** Bildfokus, siehe HeroInhalt.bildPosition. */
+    bildPosition?: string
   }
   heute: {
     label: string
     jahr: string
     bild: string
     alt: string
+    /** Bildfokus, siehe HeroInhalt.bildPosition. */
+    bildPosition?: string
   }
   bedienhinweis: string
 }
@@ -332,6 +351,12 @@ export const inhalt: SeitenInhalt = {
     ctaZiel: 'begruessung',
     bild: 'images/hero.jpg',
     bildAlt: 'Britta und Lutz Barmbold',
+    // Das Foto ist hochkant und wird im breiten Titelbereich oben und unten
+    // beschnitten. Nachgemessen: bei '50% 50%' liegen die Koepfe auf der
+    // Oberkante, bei '50% 36%' stehen beide Gesichter frei ueber der
+    // Ueberschrift. Auf dem Smartphone hat der Wert keine Wirkung, dort wird
+    // seitlich statt oben/unten beschnitten.
+    bildPosition: '50% 36%',
   },
 
   /* ------------------------------------------------------------------
@@ -498,12 +523,15 @@ export const inhalt: SeitenInhalt = {
       jahr: '2001',
       bild: 'images/damals.jpg',
       alt: 'Britta und Lutz um das Jahr 2001',
+      bildPosition: '50% 50%',
     },
     heute: {
       label: 'Heute',
       jahr: '2026',
       bild: 'images/heute.jpg',
       alt: 'Britta und Lutz heute',
+      // Rechnerisch so gesetzt, dass die ganze Figur in den 4:3-Rahmen passt.
+      bildPosition: '50% 57%',
     },
     bedienhinweis:
       'Regler ziehen oder mit den Pfeiltasten bewegen, um zwischen damals und heute zu wechseln.',

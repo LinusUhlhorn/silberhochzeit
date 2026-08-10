@@ -21,6 +21,11 @@ interface BildProps {
    * mittig ausgerichtet wuerden sie sich sonst ueberlagern.
    */
   platzhalterAusrichtung?: 'mitte' | 'links' | 'rechts'
+  /**
+   * Bildfokus beim Zuschneiden, z. B. '50% 30%'.
+   * Wichtig bei Hochformat-Fotos in breiten Flaechen.
+   */
+  bildPosition?: string
 }
 
 /**
@@ -42,6 +47,7 @@ export function Bild({
   seitenverhaeltnis,
   bildKlasse = '',
   platzhalterAusrichtung = 'mitte',
+  bildPosition,
 }: BildProps) {
   const [fehlgeschlagen, setFehlgeschlagen] = useState(false)
   const hatQuelle = Boolean(quelle)
@@ -86,6 +92,7 @@ export function Bild({
         decoding={vorrang ? 'sync' : 'async'}
         fetchPriority={vorrang ? 'high' : 'auto'}
         onError={() => setFehlgeschlagen(true)}
+        style={bildPosition ? { objectPosition: bildPosition } : undefined}
         className={`h-full w-full object-cover ${bildKlasse}`}
       />
     </div>

@@ -33,6 +33,7 @@ export function BeforeAfterSection() {
                 alt={damalsHeute.heute.alt}
                 platzhalterText="Foto folgt"
                 platzhalterAusrichtung="rechts"
+                bildPosition={damalsHeute.heute.bildPosition}
                 className="absolute inset-0 h-full w-full"
               />
 
@@ -46,6 +47,7 @@ export function BeforeAfterSection() {
                   alt={damalsHeute.damals.alt}
                   platzhalterText="Foto folgt"
                   platzhalterAusrichtung="links"
+                  bildPosition={damalsHeute.damals.bildPosition}
                   className="absolute inset-0 h-full w-full"
                 />
               </div>

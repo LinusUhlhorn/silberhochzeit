@@ -41,7 +41,8 @@ export function HeroSection() {
             // die Seite sieht dadurch trotzdem vollstaendig aus.
             event.currentTarget.style.display = 'none'
           }}
-          className="h-full w-full object-cover object-center"
+          style={{ objectPosition: hero.bildPosition ?? '50% 50%' }}
+          className="h-full w-full object-cover"
         />
 
         {/* Dezenter Verlauf: sorgt fuer lesbaren Text auf jedem Foto */}
