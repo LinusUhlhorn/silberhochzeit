@@ -23,6 +23,10 @@ export function Footer() {
             {footer.zusatz}
           </p>
         ) : null}
+
+        <p className="pb-3 text-center text-[10px] text-white/25">
+          Diese Website wurde testweise mit ChatGPT bearbeitet.
+        </p>
       </div>
     </footer>
   )
